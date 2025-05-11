@@ -1,0 +1,169 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  body {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f1f1f1;
+  }
+  
+  .container {
+    display: flex;
+    width: 800px;
+    height: 500px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  }
+  
+  .form-container {
+    width: 50%;
+    background: #fff;
+    padding: 5px;
+  }
+  
+  .logo-container {
+    width: 50%;
+    background: #2e2e2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .logo-container h1 {
+    font-size: 48px;
+  }
+  
+  .shop {
+    color: orange;
+    font-weight: 600;
+  }
+  
+  .now {
+    color: green;
+    font-weight: 600;
+  }
+  .logo-container a{
+    text-decoration: none;
+  }
+  
+  h2 {
+    margin-bottom: 15px;
+    margin-left: 65px;
+  }
+  
+  .google-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: #eee;
+    border: none;
+    border-radius: 25px;
+    width: 100%;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 500;
+    color: rgb(129, 134, 133);
+    text-decoration: none;
+  }
+  
+  .google-btn img {
+    width: 25px;
+    height: 25px;
+  }
+ 
+  
+  .or {
+    text-align: center;
+    margin: 15px 0;
+    font-weight: 500;
+    color: #666;
+  }
+  
+  form input {
+    width: 100%;
+    padding: 7px 15px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    outline: none;
+  }
+    
+  .signup-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: green;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  
+  .login-text {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 14px;
+  }
+  
+  .login-text a {
+    color: red;
+    text-decoration: none;
+    margin-left: 5px;
+  }
+  .error-message{
+    color: red;
+    font-size: 0.75rem;
+  }
+  /* login */
+
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: green;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  
+  .forgot-password {
+    text-align: right;
+    margin-bottom: 10px;
+  }
+  
+  .forgot-password a {
+    color: blue;
+    text-decoration: none;
+    font-size: 13px;
+  }
+  
+  .signup-text {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 14px;
+  }
+  
+  .signup-text a {
+    color: red;
+    text-decoration: none;
+    margin-left: 5px;
+  }
+
+  .login-heading{
+    margin-top: 30px;
+    margin-bottom: 40px;
+    margin-left: 90px;
+  }
+
+ 

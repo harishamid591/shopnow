@@ -1,0 +1,305 @@
+/* =======================
+   Header & Navbar Styles
+   ======================= */
+
+/* Logo styles */
+header{
+    background-color: #1e1e1e;
+}
+header .logo {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fd7e14; /* Bootstrap's orange */
+}
+
+header .logo span {
+    color: #198754; /* Bootstrap's green */
+}
+
+/* Search bar */
+header input[type="text"] {
+    border-radius: 0.375rem; /* rounded */
+    border: 1px solid #ced4da;
+    padding: 0.5rem 1rem;
+    transition: border-color 0.3s ease-in-out;
+}
+
+header input[type="text"]:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25); /* Bootstrap's blue */
+}
+
+/* Icon styles */
+header a {
+    color: #6c757d; /* Bootstrap's secondary */
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+header a:hover {
+    color: #000;
+}
+
+/* Dropdown */
+header .dropdown-menu {
+    min-width: 180px;
+}
+
+header .dropdown-menu a,
+header .dropdown-menu button {
+    font-size: 0.95rem;
+}
+
+/* Responsive logo spacing */
+@media (max-width: 576px) {
+    header .logo {
+        font-size: 1.5rem;
+    }
+
+    header input[type="text"] {
+        margin-top: 10px;
+    }
+
+    header .d-flex.align-items-center.gap-4 {
+        gap: 1rem;
+    }
+}
+
+/* =======================
+   Home Page Styles
+   ======================= */
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+/* Banner Sections */
+.banner-ad {
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.banner-content {
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.banner-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #222;
+}
+
+.categories {
+    font-size: 1rem;
+    color: #ff5722;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.categories.sale {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Swiper Slider */
+.swiper-pagination-bullet {
+    background: #000;
+}
+
+.swiper-slide img {
+    max-height: 250px;
+    object-fit: contain;
+}
+
+/* Category Cards */
+.category-card {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 100%; /* Ensures responsiveness */
+    max-width: 250px; /* Fixed max width */
+    height: 240px; /* Fixed height */
+    margin: 0 auto; /* Center the card */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.category-card img {
+    width: 100%;
+    height: 50px;
+    object-fit: cover;
+    border-bottom: 2px solid #ddd;
+}
+
+.category-card .category-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-top: 15px;
+    text-transform: capitalize;
+    transition: color 0.3s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.category-card:hover .category-title {
+    color: #fd7e14; /* Hover color */
+}
+
+/* Product Grid */
+.product-item {
+    transition: box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.product-item:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.product-item h5 {
+    font-size: 1rem;
+    color: #333;
+}
+
+.product-item p {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #28a745; /* Bootstrap's success color */
+}
+
+.product-qty button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+}
+
+/* Wishlist Icon */
+.btn-wishlist {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    background-color: #fff;
+    border: 1px solid #2d2d2d;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e63946; /* Heart icon color */
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-wishlist:hover {
+    background-color: #e63946;
+    border-color: #e63946;
+    color: #fff; /* Icon turns white on hover */
+}
+
+.btn-wishlist i {
+    font-size: 20px;
+    transition: transform 0.3s ease;
+}
+
+.btn-wishlist:hover i {
+    transform: scale(1.2); /* Slight zoom on hover */
+}
+
+.product-item .badge {
+    top: 10px;
+    right: 10px;
+    font-size: 0.875rem;
+}
+
+/* Category Section */
+section.py-5.overflow-hidden {
+    background-color: #f8f9fa;
+}
+
+.section-header .section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.category-card {
+    position: relative;
+    overflow: hidden;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.category-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 2px solid #ddd;
+}
+
+.category-card .category-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-top: 15px;
+    text-transform: capitalize;
+    transition: color 0.3s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.category-card:hover .category-title {
+    color: #fd7e14; /* Hover color */
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+    .category-card {
+        height: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .category-card {
+        height: 220px;
+    }
+
+    .banner-content {
+        text-align: center;
+    }
+
+    .product-item {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .category-card {
+        height: 230px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .category-card {
+        height: 240px;
+    }
+}
