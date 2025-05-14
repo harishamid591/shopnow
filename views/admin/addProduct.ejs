@@ -38,12 +38,12 @@
 
         <div class="mb-3">
           <label for="productName" class="form-label">Product Name</label>
-          <input type="text" class="form-control" id="productName" name="productName" required>
+          <input type="text" class="form-control" id="productName" name="productName" >
         </div>
 
         <div class="mb-3">
           <label for="description" class="form-label">Description</label>
-          <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+          <textarea class="form-control" id="description" name="description" rows="3" ></textarea>
         </div>
 
         <div class="mb-3">
@@ -60,7 +60,7 @@
         <div class="row">
           <div class="mb-3 col-md-6">
             <label for="category" class="form-label">Category</label>
-            <select class="form-select" id="category" name="category" required>
+            <select class="form-select" id="category" name="category" >
               <option selected disabled value="">Select Category</option>
               <% categories.forEach(function(category) { %>
                 <option value="<%= category.categoryName %>"><%= category.categoryName %></option>
@@ -70,7 +70,7 @@
 
           <div class="mb-3 col-md-6">
             <label for="brand" class="form-label">Brand</label>
-            <select class="form-select" id="brand" name="brand" required>
+            <select class="form-select" id="brand" name="brand" >
               <option selected disabled value="">Select Brand</option>
    
               <option value="brand">brandname</option>
@@ -82,7 +82,7 @@
         <div class="row">
           <div class="mb-3 col-md-4">
             <label for="price" class="form-label">Price</label>
-            <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+            <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" >
           </div>
 
           <div class="mb-3 col-md-4">
@@ -92,7 +92,7 @@
 
           <div class="mb-3 col-md-4">
             <label for="stock" class="form-label">Stock</label>
-            <input type="number" class="form-control" id="stock" name="stock" min="0" required>
+            <input type="number" class="form-control" id="stock" name="stock" min="0" >
           </div>
         </div>
 

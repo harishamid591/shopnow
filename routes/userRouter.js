@@ -9,14 +9,17 @@ const router = express.Router()
 
 
 router.get('/pageNotFound',userController.pageNotFound)
-router.get('/',isUserBlocked,userController.loadHome)
 router.get('/login',isUserLoggedIn,userController.loadLogin);
 router.get('/signup',isUserLoggedIn,userController.loadSignup);
 router.post('/signup',userController.userSignUp);
 router.post('/verify-otp',userController.verifyOtp);
 router.post('/resend-otp',userController.resendOtp);
-router.get('/forgot-password',userController.loadForgotPassword);
-router.post('/forgot-password-email',userController.forgotPassEmailVerify)
+router.get('/forgot-password',isUserLoggedIn,userController.loadForgotPassword);
+router.post('/forgot-password-email',userController.forgotPassEmailVerify);
+router.post('/forgotPass-otp-verify',userController.forgotPassOtpVerify);
+router.get('/change-password',isUserLoggedIn,userController.changePassword);
+router.post('/forgotPass-resend-otp',userController.forgotPassResendOtp);
+router.post('/new-password',userController.newPassword);
 
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -36,8 +39,11 @@ router.get('/auth/google/callback', passport.authenticate('google', { failureRed
 router.post('/login',userController.userLogin);
 router.get('/logout',userController.logOut);
 
-
-router.get('/productDetails/:id',productController.productDetails)
+router.get('/',isUserBlocked,userController.loadHome)
+router.get('/productDetails/:id',isUserBlocked,productController.productDetails)
+router.get('/allProducts',isUserBlocked,productController.allProducts)
+router.get('/filter',isUserBlocked,productController.filterProduct);
+router.get('/filterPrice',isUserBlocked,productController.filterByPrice);
 
 
 

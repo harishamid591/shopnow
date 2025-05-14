@@ -1,0 +1,14 @@
+res.render("productPage", {
+    categories,
+    brands,
+    products,
+    selectedCategory: req.query.category || '',
+    selectedBrand: req.query.brand || ''
+});
+
+
+
+<a href="?category=<%= category %>"
+   class="text-light text-decoration-none d-block <%= selectedCategory === category ? 'active' : '' %>">
+   <%= category %>
+</a>

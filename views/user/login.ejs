@@ -23,9 +23,14 @@
 
       <p class="or">or</p>
 
-      <form action="/login" method="POST">
-        <input type="email" name="email" placeholder="Email" required />
-        <input type="password" name="password" placeholder="Password" required />
+      <form action="/login" method="POST" onsubmit="return validateLoginForm()">
+
+        <div class="text-danger small" id="email-error"></div>
+        <input type="email" name="email" placeholder="Email" id="email"/>
+       
+        <div class="text-danger small" id="password-error"></div>
+        <input type="password" name="password" placeholder="Password" id="password" />
+        
 
         <div class="forgot-password">
           <a href="/forgot-password">Forgot Password?</a>
@@ -58,3 +63,39 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+<script>
+  function validateLoginForm() {
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const emailError = document.getElementById("email-error");
+    const passwordError = document.getElementById("password-error");
+
+    let isValid = true;
+    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    // Reset error messages
+    emailError.textContent = "";
+    passwordError.textContent = "";
+    email.classList.remove("is-invalid");
+    password.classList.remove("is-invalid");
+
+    if (email.value.trim() === "") {
+      emailError.textContent = "Email is required";
+      email.classList.add("is-invalid");
+      isValid = false;
+    } else if (!emailPattern.test(email.value.trim())) {
+      emailError.textContent = "Please enter a valid email";
+      email.classList.add("is-invalid");
+      isValid = false;
+    }
+
+    if (password.value.trim() === "") {
+      passwordError.textContent = "Password is required";
+      password.classList.add("is-invalid");
+      isValid = false;
+    }
+
+    return isValid;
+  }
+</script>

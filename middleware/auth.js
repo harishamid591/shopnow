@@ -21,6 +21,7 @@ const userAuth = (req, res, next) => {
 
 const adminAuth = (req, res, next) => {
     if (req.session.admin) {
+
         userModel.findById(req.session.admin)
             .then((admin) => {
                 if (admin && admin.isAdmin) {

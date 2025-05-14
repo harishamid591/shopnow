@@ -1,22 +1,39 @@
 <%- include("../../views/partials/user/header") %>
 
+
+<style>
+  .zoomable-img {
+    transition: transform 0.3s ease;
+    cursor: zoom-in;
+  }
+
+  .zoomable-img:hover {
+    transform: scale(1.5);
+  }
+</style>
+
+
 <main class="container-fluid my-5">
     <div class="row">
       <!-- Left: Images and thumbnails -->
       <div class="col-md-6">
         <div class="text-center mb-4">
-          <img src="<%= product.productImage[0] %>" alt="<%= product.productName %>" class="img-fluid" style="max-height: 400px; object-fit: contain;"/>
+          <img src="<%= product.productImage[0] %>" alt="<%= product.productName %>" 
+               class="img-fluid main-img zoomable-img" 
+               style="max-height: 400px; object-fit: contain;" />
         </div>
+        
         <div class="d-flex justify-content-center gap-3">
           <% product.productImage.forEach(function(img, idx) { %>
-            <a href="#" class="border p-1" onclick="document.querySelector('.main-img').src='<%= img %>'; return false;">
-              <img src="<%= img %>" alt="Thumb <%= idx+1 %>" class="img-fluid" style="height: 60px; object-fit: contain;"/>
+            <a href="#" class="border p-1" onclick="changeMainImage('<%= img %>'); return false;">
+              <img src="<%= img %>" alt="Thumb <%= idx+1 %>" class="img-fluid" style="height: 60px; object-fit: contain;" />
             </a>
           <% }); %>
         </div>
         
+        
         <!-- Product Details Section -->
-        <section class="mt-5">
+        <section class="mt-5 ms-5">
           <h4>Product Details</h4>
           <hr/>
           <p><strong>Description</strong><br><%= product.description %></p>
@@ -26,17 +43,21 @@
       <!-- Right: Title, Price, Action -->
       <div class="col-md-6">
         <h2><%= product.productName %></h2>
+        <p class="text-muted mb-1"><strong> productbrand </strong></p>
         <p class="text-muted"><%= product.unit %></p>
+       
       
         <div class="mb-3 d-flex align-items-center justify-content-between">
           <div>
             <span class="h4 fw-bold text-success">₹<%= product.price %></span>
-            <% if(product.price && product.discount) { %>
-              <small class="text-muted text-decoration-line-through ms-2">MRP ₹<%= product.price %></small>
+            <% if (product.price && product.discount) { 
+                 const mrp = Math.round(product.price / (1 - (product.discount / 100))); 
+            %>
+              <small class="text-muted text-decoration-line-through ms-2">MRP ₹<%= mrp %></small>
               <span class="badge bg-success ms-2"><%= product.discount %>% off</span>
             <% } %>
-      
           </div>
+          
   
         </div>
       
@@ -91,7 +112,63 @@
     </div>
   </main>
 
+  <section class="container my-5">
+    <h4 class="mb-4">Recommended Products</h4>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+      <% recommendedProducts.forEach(rp => { %>
+        <div class="col">
+          <div class="card h-100 shadow-sm p-2 d-flex flex-column justify-content-between position-relative">
+  
+            <% if (rp.discount) { %>
+              <span class="badge bg-success position-absolute" style="top: 10px; right: 10px;">-<%= rp.discount %>%</span>
+            <% } %>
+  
+            <a href="#" class="btn btn-sm btn-light border rounded-circle position-absolute" style="top: 10px; left: 10px; z-index: 3;">
+              <i class="fas fa-heart text-danger"></i>
+            </a>
+  
+            <a href="/productDetails/<%= rp._id %>">
+              <img src="<%= rp.productImage[0] %>" alt="<%= rp.productName %>" class="card-img-top img-fluid" style="max-height: 150px; object-fit: contain;">
+            </a>
+  
+            <div class="card-body p-2">
+              <h6 class="card-title text-truncate fw-semibold"><%= rp.productName %></h6>
+  
+              <div class="text-start mb-2">
+                <span class="fw-bold text-success">₹<%= rp.price %></span>
+                <% if (rp.discount) {
+                  const mrp = Math.round(rp.price / (1 - (rp.discount / 100)));
+                %>
+                  <small class="text-muted text-decoration-line-through ms-2">₹<%= mrp %></small>
+                <% } %>
+              </div>
+  
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="input-group input-group-sm" style="width: 80px;">
+                  <button class="btn btn-outline-secondary" type="button">−</button>
+                  <input type="text" class="form-control text-center" value="1">
+                  <button class="btn btn-outline-secondary" type="button">+</button>
+                </div>
+  
+                <a href="/cart/add/<%= rp._id %>" class="btn btn-primary btn-sm d-flex align-items-center">
+                  <iconify-icon icon="uil:shopping-cart" class="me-1"></iconify-icon> Add to cart
+                </a>
+              </div>
+            </div>
+  
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  
+
+
   <script>
+    function changeMainImage(src) {
+    document.querySelector('.main-img').src = src;
+  }
+  
     function increaseQty() {
       const input = document.getElementById('qty');
       input.value = parseInt(input.value) + 1;

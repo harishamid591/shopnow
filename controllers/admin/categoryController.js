@@ -8,10 +8,13 @@ const categoryInfo = async (req, res) => {
     try {
 
         const query = {}
-        const q = req.query.search;
+
+        const search = req.query.search || '';
+
         if(req.query.search){
-            query.categoryName = {$regex:`^${req.query.search}`, $options: "i"}
+            query.categoryName = {$regex: new RegExp('.*' + search + '.*', 'i')}
         }
+
 
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
@@ -48,9 +51,13 @@ const addCategory = async (req, res) => {
         const existsCategory = await categoryModel.findOne({categoryName});
     
         if(existsCategory){
-            return res.json({error:'Category already exists'})
+            return res.json({
+                success:false,
+                message:'Category already exists'
+            })
         }
     
+
         const originalImagePath = req.file.path;
     
         const resizeImagePath = path.join('public', 'uploads', 'category', req.file.filename);

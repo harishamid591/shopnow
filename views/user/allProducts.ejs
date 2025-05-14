@@ -1,0 +1,207 @@
+<%- include("../../views/partials/user/header") %>
+
+<style>
+    .sidebar {
+        background-color: #2e2e2e;
+        color: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .filter-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+        border-bottom: 1px solid #555;
+        padding-bottom: 0.25rem;
+    }
+
+    .filter-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-item {
+        margin-bottom: 0.4rem;
+        list-style: none;
+    }
+
+    .filter-section ul {
+        padding-left: 0;
+        margin-bottom: 0;
+        max-height: 130px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #888 #2e2e2e;
+    }
+
+    .filter-section ul::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .filter-section ul::-webkit-scrollbar-thumb {
+        background-color: #888;
+        border-radius: 3px;
+    }
+
+    .filter-section ul::-webkit-scrollbar-track {
+        background-color: #343a40;
+    }
+
+    .price-button {
+        width: 100%;
+        text-align: left;
+    }
+
+    .filter-item a:hover {
+        background-color: #444;
+        border-radius: 5px;
+        padding-left: 0.4rem;
+        color: #fff;
+        transition: 0.3s;
+    }
+
+    .filter-item a.active {
+        background-color: #555;
+        font-weight: bold;
+        border-radius: 5px;
+        padding-left: 0.4rem;
+    }
+
+    .product-item img {
+        max-height: 150px;
+        object-fit: contain;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <aside class="col-md-3 col-lg-2 sidebar">
+            <h5 class="mb-3">Filters</h5>
+
+            <!-- Category Filter -->
+            <div class="filter-section mb-3">
+                <div class="filter-title">Categories</div>
+                <ul class="ps-1">
+                    <% categories.forEach(category => { %>
+                        <li class="filter-item">
+                            <a href="/filter?category=<%= category._id %>" class="text-light text-decoration-none d-block <%= selectedCategory == category._id ? 'active' : '' %>">
+                                <%= category.categoryName %>
+                            </a>
+                        </li>
+                    <% }) %>
+                </ul>
+            </div>
+
+            <!-- Brand Filter -->
+            <div class="filter-section mb-3">
+                <div class="filter-title">Brands</div>
+                <ul class="ps-1">
+                    <% brands.forEach(brand => { %>
+                        <li class="filter-item">
+                            <a href="/filter?brand=<%= brand._id %>" class="text-light text-decoration-none d-block <%= selectedBrand === brand ? 'active' : '' %>">
+                                <%= brand %>
+                            </a>
+                        </li>
+                    <% }) %>
+                </ul>
+            </div>
+
+            <!-- Price Filter -->
+            <div class="filter-section mb-3">
+                <div class="filter-title">Filter by Price</div>
+                <form id="price-filter-form">
+                    <div class="price-options d-flex flex-column gap-2">
+                        <a href="/filterPrice?gt=0&lt=500" class="price-button btn btn-outline-light btn-sm">Under ₹500</a>
+                        <a href="/filterPrice?gt=500&lt=1000" class="price-button btn btn-outline-light btn-sm">₹500 - ₹1000</a>
+                        <a href="/filterPrice?gt=1000&lt=1500" class="price-button btn btn-outline-light btn-sm">₹1000 - ₹1500</a>
+                        <a href="/filterPrice?gt=1500&lt=100000" class="price-button btn btn-outline-light btn-sm">Above ₹1500</a>
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Products Section -->
+        <section class="col-md-9 col-lg-10">
+            <h3 class="mb-4">
+                <%= selectCategoryName ? selectCategoryName : 'Products' %>
+            </h3>
+
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                <% products.forEach(product => { %>
+                    <div class="col">
+                        <div class="card h-100 shadow-sm p-2 d-flex flex-column justify-content-between position-relative">
+
+                            <% if (product.discount) { %>
+                                <span class="badge bg-success position-absolute" style="top: 10px; right: 10px;">-<%= product.discount %>%</span>
+                            <% } %>
+
+                            <a href="#" class="btn btn-sm btn-light border rounded-circle position-absolute" style="top: 10px; left: 10px; z-index: 3;">
+                                <i class="fas fa-heart text-danger"></i>
+                            </a>
+
+                            <!-- Image -->
+                            <a href="/productDetails/<%= product._id %>">
+                                <img src="<%= product.productImage[0] %>" alt="<%= product.productName %>" class="card-img-top img-fluid" />
+                            </a>
+
+                            <div class="card-body p-2">
+                                <!-- Name -->
+                                <h6 class="card-title text-truncate fw-semibold"><%= product.productName %></h6>
+
+                                <!-- Price -->
+                                <div class="text-start mb-2">
+                                    <span class="fw-bold text-success">₹<%= product.price %></span>
+                                    <% if (product.discount) {
+                                        const mrp = Math.round(product.price / (1 - (product.discount / 100)));
+                                    %>
+                                        <small class="text-muted text-decoration-line-through ms-2">₹<%= mrp %></small>
+                                    <% } %>
+                                </div>
+
+                                <!-- Quantity & Add to Cart -->
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="input-group input-group-sm" style="width: 80px;">
+                                        <button class="btn btn-outline-secondary" type="button">−</button>
+                                        <input type="text" class="form-control text-center" value="1">
+                                        <button class="btn btn-outline-secondary" type="button">+</button>
+                                    </div>
+
+                                    <a href="/cart/add/<%= product._id %>" class="btn btn-primary btn-sm d-flex align-items-center">
+                                        <iconify-icon icon="uil:shopping-cart" class="me-1"></iconify-icon> Add to cart
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-4">
+                <nav>
+                    <ul class="pagination">
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=<%= currentPage - 1 %>">‹</a>
+                        </li>
+
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=<%= currentPage + 1 %>">›</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </section>
+    </div>
+</div>
+
+<%- include("../../views/partials/user/footer") %>

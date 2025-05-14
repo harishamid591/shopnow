@@ -17,29 +17,34 @@ const pageNotFound = async (req, res) => {
 const loadHome = async (req, res) => {
     try {
 
-        const user = req.session.user
+        const userid = req.session.user
 
-        const categories = await categoryModel.find({isListed:true});
+        const categories = await categoryModel.find({ isListed: true });
 
-        const products = await productModel.find({isBlocked:false});
-        
-        if(user){
-            const userData = await userModel.findOne({_id:user})
+        const products = await productModel.find({ 
+            isBlocked: false,
+            category:{$in: categories.map(category => category._id)}
+        });
 
-            return res.render('home',{
-                user:userData,
-                categories:categories,
-                products:products
+        products.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt))
+
+        if (userid) {
+            const userData = await userModel.findOne({ _id: userid })
+
+            return res.render('home', {
+                user: userData,
+                categories: categories,
+                products: products
             })
-        }else{
-            return res.render('home',{
+        } else {
+            return res.render('home', {
                 categories,
                 products
             })
         }
-        
+
     } catch (error) {
-        console.log('home page not found',error)
+        console.log('home page not found', error)
         res.status(500).send('server error')
     }
 }
@@ -131,7 +136,7 @@ const userSignUp = async (req, res) => {
         }
 
         req.session.userOtp = otp;
-        req.session.userData = { name, email, phone ,password };
+        req.session.userData = { name, email, phone, password };
 
         res.render('verify-otp');
 
@@ -155,14 +160,14 @@ const verifyOtp = async (req, res) => {
             const userData = {
                 name: user.name,
                 email: user.email,
-                phone:user.phone,
+                phone: user.phone,
                 password: hashedPassword
             }
 
             const newUser = new userModel(userData)
 
             await newUser.save();
-            
+
             req.session.user = newUser._id;
 
             res.json({ success: true, redirectUrl: '/login' })
@@ -186,6 +191,8 @@ const resendOtp = async (req, res) => {
     try {
 
         const { email } = req.session.userData;
+
+        console.log(email)
         const resendOtp = generateOtp()
 
         const emailSend = await sendVerificationEmail(email, resendOtp)
@@ -214,6 +221,7 @@ const userLogin = async (req, res) => {
     try {
         const { email, password } = req.body
 
+
         const findUser = await userModel.findOne({ email });
 
         if (!findUser) {
@@ -227,66 +235,153 @@ const userLogin = async (req, res) => {
         const checkPassword = await bcrypt.compare(password, findUser.password)
 
         if (!checkPassword) {
-            res.render('login', { msg: `Invalid credentials` })
+           return res.render('login', { msg: `Invalid credentials` })
         }
 
         const name = findUser.name;
 
         req.session.user = findUser._id;
 
-        res.redirect('/');
+        return res.redirect('/');
     } catch (error) {
-        console.error('Login Error',error);
-        res.render('login',{msg:`Login Failed Try again`});
+        console.error('Login Error', error);
+        res.render('login', { msg: `Login Failed Try again` });
     }
 
 }
 
-const logOut = async (req,res)=>{
+const logOut = async (req, res) => {
     try {
-        
-        req.session.destroy((err)=>{
-            if(err){
-                console.log('Session destruction error',err.message);
+
+        req.session.destroy((err) => {
+            if (err) {
+                console.log('Session destruction error', err.message);
                 return res.redirect('/pageNotFound');
             }
             return res.redirect('/');
         })
 
-    } catch (error) {   
-        console.log('logout error',error);
+    } catch (error) {
+        console.log('logout error', error);
         res.redirect('/pageNotFound')
     }
 }
 
-const forgotPassEmailVerify = async (req,res)=>{
+const forgotPassEmailVerify = async (req, res) => {
     try {
-        const {email} = req.body;
+        const { email } = req.body;
 
-        const user = await userModel.findOne({email});
+        const user = await userModel.findOne({ email });
 
-        if(!user){
-            res.render('forgot-password',{msg:`User is not found`});
+        if (!user) {
+            return res.render('forgot-password', { msg: `User is not found` });
         }
 
         const otp = generateOtp();
         const emailSend = await sendVerificationEmail(user.email, otp)
 
-        if(emailSend){
+        if (emailSend) {
             req.session.userOtp = otp;
             req.session.email = email;
 
             return res.render('forgotPass-otp');
-        }else{
-            return res.render('forgot-password',{msg:`User with this email does not exists`});
+        } else {
+            return res.render('forgot-password', { msg: `User with this email does not exists` });
         }
-        
-        
+
+
     } catch (error) {
-        console.log('forgot email verify error',error);
+        console.log('forgot email verify error', error);
         return res.redirect('/pageNotFound')
     }
 }
+
+const forgotPassOtpVerify = async (req, res) => {
+    try {
+        const { otp } = req.body;
+
+        if (req.session.userOtp === otp) {
+            return res.json({
+                success: true,
+                redirectUrl: '/change-password'
+            })
+        } else {
+            return res.json({
+                success: false,
+            })
+        }
+    } catch (error) {
+        console.log('forgot password otp verify error', error);
+        return res.redirect('/pageNotFound')
+    }
+}
+
+const changePassword = async (req, res) => {
+    try {
+        
+        res.render("change-password");
+
+    } catch (error) {
+
+        res.redirect("/pageNotFound")
+        
+    }
+}
+
+const forgotPassResendOtp = async (req,res)=>{
+
+    try {
+        const otp = generateOtp();
+    const email = req.session.email;
+
+    const sendEmail = await sendVerificationEmail(email, otp);
+
+    if(sendEmail){
+        req.session.userOtp = otp;
+        return res.status(200).json({
+            success:true,
+            message:'Resend OTP successful'
+        })
+    }
+    } catch (error) {
+        console.error('error in forgot password resend otp',error);
+        return res.status(500).json({
+            success:false,
+            message:'Internal server error'
+        })
+    }
+    
+}
+
+const newPassword = async (req,res)=>{
+    try {
+        const {newPassword, confirmPassword} = req.body;
+
+        if(newPassword !== confirmPassword){
+            return res.status(400).json({
+                success:false,
+                message:'mismatch password'
+            })
+        }
+
+        const email = req.session.email;
+
+        const hashedPassword = await bcrypt.hash(newPassword,10);
+
+       const updateNewPassword = await userModel.updateOne({email},{$set:{password:hashedPassword}});
+        
+       if(updateNewPassword){
+        return res.status(200).json({
+            success:true,
+            message:'Password has changed successfully'
+        })
+       }
+
+    } catch (error) {
+        
+    }
+}
+
 module.exports = {
     loadHome,
     pageNotFound,
@@ -298,5 +393,9 @@ module.exports = {
     resendOtp,
     userLogin,
     logOut,
-    forgotPassEmailVerify
+    forgotPassEmailVerify,
+    forgotPassOtpVerify,
+    changePassword,
+    forgotPassResendOtp,
+    newPassword
 }

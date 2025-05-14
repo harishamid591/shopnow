@@ -612,7 +612,7 @@ h1,h2,h3,h4,h5,h6 {
     border-radius: 8px;
   }
   /* dropdown-menu */
-  .dropdown-menu {
+  /* .dropdown-menu {
     padding: 0;
     border: none;
     line-height: 1.4;
@@ -626,7 +626,7 @@ h1,h2,h3,h4,h5,h6 {
     right: 0;
     top: 21px;
   }
-}
+} */
 
 /* single product */
 /* product-thumbnail-slider */

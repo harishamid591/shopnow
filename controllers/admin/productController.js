@@ -87,13 +87,13 @@ const displayProducts = async (req, res) => {
         const search = req.query.search || '';
 
         const page = req.query.page || 1;
-        const limit = 3;
+        const limit = 4;
 
         const productData = await productModel.find(
             {
                 productName: { $regex: new RegExp('.*' + search + '.*', 'i') }
             }
-        ).limit(limit * 1).skip((page - 1) * limit).populate('category').exec();
+        ).skip((page - 1) * limit).limit(limit * 1).populate('category').exec();
 
         const count = await productModel.find(
             {
@@ -190,7 +190,7 @@ const deleteProduct = async (req, res) => {
         console.error("Error deleting product:", error);
         return res.status(500).json({
             success: false,
-            message: "An error occurred while updating the product."
+            message: "An error occurred while deleting the product."
         });
     }
 }

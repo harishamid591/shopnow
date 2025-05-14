@@ -57,7 +57,7 @@
             </td>
             <td class="d-flex justify-content-center align-items-center" style="height: 100%;">
                 <div class="d-flex flex-column align-items-center gap-1">
-                    <button class="btn btn-success btn-sm w-fixed" style="width: 80px;" onclick='openEditModal(<%- JSON.stringify(product) %>)'>Edit</button>
+                    <button class="btn btn-success btn-sm w-fixed" style="width: 80px;" data-product="<%= encodeURIComponent(JSON.stringify(product)) %>" onclick='openEditModalFromButton(this)'>Edit</button>
 
                   <button class="btn btn-danger btn-sm w-fixed" style="width: 80px;" onclick="confirmDelete('<%= product._id %>')">Delete</button>
                   <form id="toggleForm-<%= product._id %>" action="/admin/product-isBlocked/<%= product._id %>" method="POST" onsubmit="handleToggleSubmit(event)">
@@ -78,7 +78,7 @@
     <nav>
       <ul class="pagination">
         <% for (let i = 1; i <= totalPages; i++) { %>
-          <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+          <li class="page-item <%= currentPage == i ? 'active' : '' %>">
             <a class="page-link" href="?page=<%= i %>"><%= i %></a>
           </li>
         <% } %>
@@ -111,7 +111,7 @@
 
           <div class="mb-3">
             <label class="form-label">Stock</label>
-            <input type="number" class="form-control" id="stock" name="stock" required>
+            <input type="text" class="form-control" id="stock" name="stock" required>
           </div>
 
           <div class="mb-3">
@@ -133,6 +133,11 @@
 
 <script>
   const editProductModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+
+  function openEditModalFromButton(button){
+    const product = JSON.parse(decodeURIComponent(button.dataset.product));
+    openEditModal(product);
+  }
 
   function openEditModal(product) {
     document.getElementById('editProductModalLabel').innerText = "Edit Product";

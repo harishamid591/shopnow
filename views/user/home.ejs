@@ -40,76 +40,103 @@
       </section>
       
 
-    <section class="py-5 overflow-hidden">
-      <div class="container-fluid px-3 px-md-4">
-        <div class="section-header d-flex justify-content-between align-items-center mb-4">
-          <h2 class="section-title m-0">Category</h2>
-        </div>
-    
-        <div class="row g-4">
-          <% categories.forEach(category => { %>
-            <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-              <div class="category-card text-center">
-                <img src="<%= category.categoryImage %>" alt="Category Thumbnail" class="img-fluid" />
-                <h3 class="category-title mt-3"><%= category.categoryName %></h3>
+      <section class="py-5 overflow-hidden">
+        <div class="container-fluid px-3 px-md-4">
+          <div class="section-header d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title m-0">Browse Categories</h2>
+          </div>
+      
+          <div class="row g-4">
+            <% categories.forEach(category => { %>
+              <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                <a href="/filter?category=<%= category._id %>" class="text-decoration-none">
+                  <div class="category-card text-center p-2">
+                    <img src="<%= category.categoryImage %>" alt="Category Thumbnail" class="img-fluid" />
+                    <h3 class="category-title mt-2"><%= category.categoryName %></h3>
+                  </div>
+                </a>
               </div>
+            <% }) %>
+          </div>
+        </div>
+      </section>
+      
+    
+    <!-- Product section -->
+
+    <section class="bg-light">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="bootstrap-tabs product-tabs">
+              <div class="tabs-header d-flex justify-content-between align-items-center border-bottom my-5">
+                <h3>Products</h3>
+                <a href="/allProducts" class="btn btn-outline-primary btn-sm">See All</a>
+              </div>
+    
+              <div class="tab-content" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-all" role="tabpanel">
+                  <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+                    <% products.slice(0, 10).forEach(product => { %>
+                    <div class="col">
+                      <div class="product-item card h-100 p-3 position-relative shadow-sm">
+                        <% if(product.discount) { %>
+                          <span class="badge bg-success position-absolute" style="top: 10px; right: 10px; z-index: 3;">-<%= product.discount %>%</span>
+                        <% } %>
+    
+                        <!-- Wishlist Icon on top of image -->
+                        <a href="#" class="btn btn-sm btn-light border rounded-circle position-absolute" style="top: 10px; left: 10px; z-index: 3;">
+                          <i class="fas fa-heart text-danger"></i>
+                        </a>
+                        
+    
+                        <figure class="text-center mb-3 position-relative">
+                          <a href="/productDetails/<%= product._id %>" title="<%= product.productName %>">
+                            <img src="<%= product.productImage[0] %>" alt="<%= product.productName %>" class="img-fluid" style="max-height: 150px; object-fit: contain;" />
+                          </a>
+                        </figure>
+    
+                        <h5 class="fw-semibold text-start text-truncate"><%= product.productName %></h5>
+                        
+                        <div class="text-start mb-2">
+                          <span class="fw-bold text-success">₹<%= product.price %></span>
+                          <% if(product.discount) { 
+                              const mrp = Math.round(product.price / (1 - (product.discount / 100)));
+                          %>
+                            <small class="text-muted text-decoration-line-through ms-2">MRP ₹<%= mrp %></small>
+                          <% } %>
+                        </div>
+    
+                        <div class="d-flex align-items-center justify-content-between">
+
+                          <!-- Quantity Selector -->
+                          <div class="input-group input-group-sm" style="width: 80px;">
+                            <button class="btn btn-outline-secondary" type="button">−</button>
+                            <input type="text" class="form-control text-center" value="1">
+                            <button class="btn btn-outline-secondary" type="button">+</button>
+                          </div>
+
+                          <!-- Add to Cart Button -->
+                          <a href="/cart/add/<%= product._id %>" class="btn btn-primary btn-sm d-flex align-items-center">
+                            <iconify-icon icon="uil:shopping-cart" class="me-1"></iconify-icon> Add to cart
+                          </a>
+    
+                          
+                        </div>
+    
+                      </div>
+                    </div>
+                    <% }) %>
+                  </div>
+                </div>
+              </div>
+    
             </div>
-          <% }) %>
+          </div>
         </div>
       </div>
     </section>
     
-    <!-- Product section -->
-
-    <section class=" bg-light">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="bootstrap-tabs product-tabs">
-                        <div class="tabs-header d-flex justify-content-between border-bottom my-5">
-                            <h3>Products</h3>
-                        </div>
-    
-                        <div class="tab-content" id="nav-tabContent">
-                            <div class="tab-pane fade show active" id="nav-all" role="tabpanel">
-                                <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
-                                    <% products.slice(0, 10).forEach(product => { %>
-                                    <div class="col">
-                                        <div class="product-item card h-100 p-3 position-relative shadow-sm">
-                                            <% if(product.discount) { %>
-                                            <span class="badge bg-success position-absolute top-0 end-0 m-3">-<%= product.discount %>%</span>
-                                            <% } %>
-    
-                                            <!-- Wishlist Icon -->
-                                            <a href="#" class="btn-wishlist position-absolute rounded-circle bg-light top-0 start-0 m-3">
-                                                <i class="fas fa-heart"></i> <!-- Font Awesome heart icon -->
-                                            </a>
-    
-                                            <figure class="text-center mb-3">
-                                                <a href="/productDetails/<%= product._id %>" title="<%= product.productName %>">
-                                                    <img src="<%= product.productImage[0] %>" alt="<%= product.productName %>" class="img-fluid" style="max-height: 150px; object-fit: contain;" />
-                                                </a>
-                                            </figure>
-    
-                                            <h5 class="fw-semibold text-start"><%= product.productName %></h5>
-                                            <p class="text-start fw-bold text-success mb-2">₹<%= product.price %></p>
-    
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <a href="/cart/add/<%= product._id %>" class="btn btn-primary btn-sm d-flex align-items-center">
-                                                    <iconify-icon icon="uil:shopping-cart" class="me-1"></iconify-icon> Add
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <% }) %>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
     
       
     
@@ -140,104 +167,82 @@
         </div>
       </div>
     </section>
-    
-    <!-- Remaining Products -->
-    <section class="py-5 bg-light">
+
+
+     <!-- Product section -->
+
+     <section class="bg-light">
       <div class="container-fluid">
         <div class="row">
           <div class="col-md-12">
             <div class="bootstrap-tabs product-tabs">
+              
+    
               <div class="tab-content" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-all" role="tabpanel">
                   <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
-                    <% products.slice(10).forEach(product => { %>
+                    <% products.slice(10, 20).forEach(product => { %>
                     <div class="col">
                       <div class="product-item card h-100 p-3 position-relative shadow-sm">
                         <% if(product.discount) { %>
-                        <span class="badge bg-success position-absolute top-0 end-0 m-3">-<%= product.discount %>%</span>
+                          <span class="badge bg-success position-absolute" style="top: 10px; right: 10px; z-index: 3;">-<%= product.discount %>%</span>
                         <% } %>
     
-                        <a href="#" class="btn-wishlist position-absolute top-0 start-0 m-3">
-                          <svg width="24" height="24"><use xlink:href="#heart"></use></svg>
+                        <!-- Wishlist Icon on top of image -->
+                        <a href="#" class="btn btn-sm btn-light border rounded-circle position-absolute" style="top: 10px; left: 10px; z-index: 3;">
+                          <i class="fas fa-heart text-danger"></i>
                         </a>
+                        
     
-                        <figure class="text-center mb-3">
-                          <a href="/product/<%= product._id %>" title="<%= product.productName %>">
-                            <img src="<%= product.productImage[0] %>" alt="<%= product.title %>" class="img-fluid" style="max-height: 150px; object-fit: contain;" />
+                        <figure class="text-center mb-3 position-relative">
+                          <a href="/productDetails/<%= product._id %>" title="<%= product.productName %>">
+                            <img src="<%= product.productImage[0] %>" alt="<%= product.productName %>" class="img-fluid" style="max-height: 150px; object-fit: contain;" />
                           </a>
                         </figure>
     
-                        <h5 class="fw-semibold text-start"><%= product.productName %></h5>
-                        <p class="text-start fw-bold text-success mb-3">₹<%= product.price %></p>
+                        <h5 class="fw-semibold text-start text-truncate"><%= product.productName %></h5>
+                        
+                        <div class="text-start mb-2">
+                          <span class="fw-bold text-success">₹<%= product.price %></span>
+                          <% if(product.discount) { 
+                              const mrp = Math.round(product.price / (1 - (product.discount / 100)));
+                          %>
+                            <small class="text-muted text-decoration-line-through ms-2">MRP ₹<%= mrp %></small>
+                          <% } %>
+                        </div>
     
                         <div class="d-flex align-items-center justify-content-between">
-                          <div class="input-group product-qty w-50">
-                            <button type="button" class="btn btn-outline-danger btn-sm" data-type="minus">
-                              <svg width="16" height="16"><use xlink:href="#minus"></use></svg>
-                            </button>
-                            <input type="text" name="quantity" class="form-control form-control-sm text-center" value="1" />
-                            <button type="button" class="btn btn-outline-success btn-sm" data-type="plus">
-                              <svg width="16" height="16"><use xlink:href="#plus"></use></svg>
-                            </button>
+
+                          <!-- Quantity Selector -->
+                          <div class="input-group input-group-sm" style="width: 80px;">
+                            <button class="btn btn-outline-secondary" type="button">−</button>
+                            <input type="text" class="form-control text-center" value="1">
+                            <button class="btn btn-outline-secondary" type="button">+</button>
                           </div>
+
+                          <!-- Add to Cart Button -->
                           <a href="/cart/add/<%= product._id %>" class="btn btn-primary btn-sm d-flex align-items-center">
-                            <iconify-icon icon="uil:shopping-cart" class="me-1"></iconify-icon> Add
+                            <iconify-icon icon="uil:shopping-cart" class="me-1"></iconify-icon> Add to cart
                           </a>
+    
+                          
                         </div>
+    
                       </div>
                     </div>
                     <% }) %>
                   </div>
                 </div>
               </div>
+    
             </div>
           </div>
         </div>
       </div>
     </section>
     
-    <section class="py-5">
-      <div class="container-fluid">
-
-        <div class="bg-secondary py-5 my-5 rounded-5" style="background: url('images/bg-leaves-img-pattern.png') no-repeat;">
-          <div class="container my-5">
-            <div class="row">
-              <div class="col-md-6 p-5">
-                <div class="section-header">
-                  <h2 class="section-title display-4">Get <span class="text-primary">25% Discount</span> on your first purchase</h2>
-                </div>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Dictumst amet, metus, sit massa posuere maecenas. At tellus ut nunc amet vel egestas.</p>
-              </div>
-              <div class="col-md-6 p-5">
-                <form>
-                  <div class="mb-3">
-                    <label for="name" class="form-label">Name</label>
-                    <input type="text"
-                      class="form-control form-control-lg" name="name" id="name" placeholder="Name">
-                  </div>
-                  <div class="mb-3">
-                    <label for="" class="form-label">Email</label>
-                    <input type="email" class="form-control form-control-lg" name="email" id="email" placeholder="abc@mail.com">
-                  </div>
-                  <div class="form-check form-check-inline mb-3">
-                    <label class="form-check-label" for="subscribe">
-                    <input class="form-check-input" type="checkbox" id="subscribe" value="subscribe">
-                    Subscribe to the newsletter</label>
-                  </div>
-                  <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-dark btn-lg">Submit</button>
-                  </div>
-                </form>
-                
-              </div>
-              
-            </div>
-            
-          </div>
-        </div>
-        
-      </div>
-    </section>
+ 
+    
 
 
     <section class="py-5 my-5">
@@ -264,29 +269,6 @@
       </div>
     </section>
 
-    <section class="py-5">
-      <div class="container-fluid">
-        <h2 class="my-5">People are also looking for</h2>
-        <a href="#" class="btn btn-warning me-2 mb-2">Blue diamon almonds</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Angie’s Boomchickapop Corn</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Salty kettle Corn</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chobani Greek Yogurt</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Sweet Vanilla Yogurt</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Foster Farms Takeout Crispy wings</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Warrior Blend Organic</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chao Cheese Creamy</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chicken meatballs</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Blue diamon almonds</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Angie’s Boomchickapop Corn</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Salty kettle Corn</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chobani Greek Yogurt</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Sweet Vanilla Yogurt</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Foster Farms Takeout Crispy wings</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Warrior Blend Organic</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chao Cheese Creamy</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chicken meatballs</a>
-      </div>
-    </section>
 
     <section class="py-5">
       <div class="container-fluid">
