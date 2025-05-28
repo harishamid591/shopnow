@@ -93,7 +93,9 @@ const displayProducts = async (req, res) => {
             {
                 productName: { $regex: new RegExp('.*' + search + '.*', 'i') }
             }
-        ).skip((page - 1) * limit).limit(limit * 1).populate('category').exec();
+        ).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit * 1).populate('category').exec();
+
+        const categories = await categoryModel.find({isListed:true});
 
         const count = await productModel.find(
             {
@@ -109,6 +111,7 @@ const displayProducts = async (req, res) => {
                 products: productData,
                 currentPage: page,
                 totalPages: Math.ceil(count / limit),
+                categories
 
             })
         }
@@ -118,28 +121,142 @@ const displayProducts = async (req, res) => {
     }
 }
 
+// const editProduct = async (req, res) => {
+//     try {
+//         const productId = req.params.id;
+
+//         const { productName, price, stock, discount } = req.body;
+
+//         const existingProduct = await productModel.findOne({ _id:{$ne:productId } ,productName:productName});
+
+//         if (existingProduct) {
+//             return res
+//                 .status(400)
+//                 .json({ success: false, message: "Product with this name already exists. Please try another name." })
+//         }
+
+//         const product = await productModel.findOne({ _id: productId });
+//         if (
+//             product.productName == productName &&
+//             product.price == price &&
+//             product.stock == stock &&
+//             product.discount == discount
+//         ) {
+//             return res.json({ success: false, message: 'No changes detected. Please modify at least one field before saving.' });
+//         }
+
+//         const updatedProduct = await productModel.findByIdAndUpdate(
+//             productId,
+//             {
+//                 productName,
+//                 price,
+//                 stock,
+//                 discount
+//             },
+//             { new: true }
+//         );
+
+//         if (!updatedProduct) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: "Product not found."
+//             });
+//         }
+
+//         return res.status(200).json({
+//             success: true,
+//             message: "Product updated successfully.",
+//             product: updatedProduct
+//         });
+
+
+//     } catch (error) {
+//         console.error("Error updating product:", error);
+//         return res.status(500).json({
+//             success: false,
+//             message: "An error occurred while updating the product."
+//         });
+//     }
+// }
+
+
 const editProduct = async (req, res) => {
     try {
         const productId = req.params.id;
 
-        const { productName, price, stock, discount } = req.body;
+        const {
+            productName,
+            price,
+            stock,
+            discount,
+            brand,
+            description,
+            categoryId,
+            existingImages // This is a JSON string
+        } = req.body;
 
-        const existingProduct = await productModel.findOne({ _id:{$ne:productId } ,productName:productName});
+        // Parse existingImages string to array
+        let existingImagesArray = [];
+        try {
+            existingImagesArray = JSON.parse(existingImages);
+        } catch (err) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid existingImages format"
+            });
+        }
+
+        // New images (uploaded files)
+        // const newImages = req.files?.map(file => `/uploads/${file.filename}`) || [];
+
+        const newImages = [];
+        if(req.files){
+
+            for (let i = 0; i < req.files.length; i++) {
+
+                const newImagePath = req.files[i].path;
+    
+                const resizedImagePath = path.join('public', 'uploads', 'products', req.files[i].filename);
+                await sharp(newImagePath).resize({ width: 440, height: 440 }).toFile(resizedImagePath);
+    
+                const imagePath = path.join('/', 'uploads', 'products', req.files[i].filename);
+    
+                newImages.push(imagePath);
+            }
+        }
+        
+
+        // Combine existing + new
+        const allImages = [...existingImagesArray, ...newImages];
+
+        const existingProduct = await productModel.findOne({
+            _id: { $ne: productId },
+            productName: productName
+        });
 
         if (existingProduct) {
-            return res
-                .status(400)
-                .json({ success: false, message: "Product with this name already exists. Please try another name." })
+            return res.status(400).json({
+                success: false,
+                message: "Product with this name already exists. Please try another name."
+            });
         }
 
         const product = await productModel.findOne({ _id: productId });
+
         if (
             product.productName == productName &&
             product.price == price &&
             product.stock == stock &&
-            product.discount == discount
+            product.discount == discount &&
+            product.brand == brand &&
+            product.description == description &&
+            product.category.toString() == categoryId &&
+            JSON.stringify(product.productImage) == JSON.stringify(allImages)
         ) {
-            return res.json({ success: false, message: 'No changes detected. Please modify at least one field before saving.' });
+            return res.json({
+                success: false,
+                message: 'No changes detected. Please modify at least one field before saving.'
+            });
         }
 
         const updatedProduct = await productModel.findByIdAndUpdate(
@@ -148,7 +265,11 @@ const editProduct = async (req, res) => {
                 productName,
                 price,
                 stock,
-                discount
+                discount,
+                brand,
+                description,
+                category:categoryId,
+                productImage: allImages
             },
             { new: true }
         );
@@ -166,7 +287,6 @@ const editProduct = async (req, res) => {
             product: updatedProduct
         });
 
-
     } catch (error) {
         console.error("Error updating product:", error);
         return res.status(500).json({
@@ -174,7 +294,8 @@ const editProduct = async (req, res) => {
             message: "An error occurred while updating the product."
         });
     }
-}
+};
+
 
 const deleteProduct = async (req, res) => {
     try {

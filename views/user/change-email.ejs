@@ -1,0 +1,62 @@
+<%- include("../../views/partials/user/header") %>
+
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 shadow p-4 rounded bg-light">
+      <h4 class="mb-4 fw-bold text-center">Change Email</h4>
+
+      <form id="changeEmailForm" action="/change-email" method="POST" novalidate>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Current Email</label>
+          <input type="email" class="form-control" value="<%= user.email %>" disabled>
+        </div>
+
+        <div class="mb-3">
+          <label for="newEmail" class="form-label fw-bold">New Email</label>
+          <input type="email" class="form-control" name="newEmail" id="newEmail" required>
+          <div class="invalid-feedback">Please enter a valid new email address.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Update Email</button>
+      </form>
+
+      <div class="mt-3 text-center">
+        <a href="/userProfile" class="text-decoration-none">← Back to Profile</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SweetAlert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  // Bootstrap form validation
+  (function () {
+    const form = document.getElementById('changeEmailForm');
+
+    form.addEventListener('submit', function (event) {
+      if (!form.checkValidity()) {
+        event.preventDefault(); // stop form submission
+        event.stopPropagation();
+      }
+
+      form.classList.add('was-validated'); // show validation messages
+    }, false);
+  })();
+</script>
+
+<!-- Show error alert if OTP is wrong -->
+<% if (typeof error !== 'undefined') { %>
+    <script>
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid OTP',
+        text: '<%= error %>',
+        confirmButtonColor: '#d33'
+      });
+    </script>
+  <% } %>
+
+<%- include("../../views/partials/user/footer") %>

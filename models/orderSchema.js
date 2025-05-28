@@ -39,6 +39,10 @@ const orderSchema = new Schema({
             type: Number,
             default: 0
         },
+        totalProductPrice:{
+            type:Number,
+            default:0
+        },
         status: {
             type: String,
             enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'return_requested', 'returning', 'returned'],
@@ -46,9 +50,41 @@ const orderSchema = new Schema({
         },
         cancelReason: {
             type: String
+        },
+        cancelledAt: {
+            type: Date
+        },
+        updatedOn:{
+            type:Date
+        },
+        deliveredOn:{
+            type:Date
+        },
+        returnReason:{
+            type:String
+        },
+        returnDescription:{
+            type:String
+        },
+        returnImages:[{
+            type: String
+        }],
+        requestStatus:{
+            type: String,
+            enum: ['pending', 'approved', 'rejected'],
+            default: 'pending'
+        },
+        rejectionCategory: {
+            type: String
+        },
+        rejectionReason: {
+            type: String
+        },    
+        updatedOn:{
+            type:Date
         }
     }],
-    totalPrice: {
+    totalOrderPrice: {
         type: Number,
         required: true
     },

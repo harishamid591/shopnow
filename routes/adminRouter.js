@@ -4,6 +4,7 @@ const adminController = require('../controllers/admin/adminController');
 const customerController = require('../controllers/admin/customerController')
 const categoryController = require('../controllers/admin/categoryController')
 const productController = require('../controllers/admin/productController')
+const orderController = require('../controllers/admin/orderController')
 const upload = require('../config/multer')
 
 
@@ -34,9 +35,24 @@ router.post('/category-list/:id',adminAuth,categoryController.listOrUnlistCatego
 router.get('/addProducts',adminAuth,productController.getProductAddPage);
 router.post('/addProducts',adminAuth,upload.array('images'),productController.addProducts);
 router.get('/products',adminAuth,productController.displayProducts)
-router.post('/product-edit/:id',adminAuth, upload.none(),productController.editProduct)
+// router.post('/product-edit/:id',adminAuth, upload.none(),productController.editProduct)
+router.post('/product-edit/:id', adminAuth, upload.array('newImages', 5), productController.editProduct);
 router.post('/product-delete/:id',adminAuth,productController.deleteProduct)
 router.post('/product-isBlocked/:id',adminAuth,productController.isBlockedProduct)
+
+
+//Order Management
+router.get('/orders',adminAuth,orderController.getOrders)
+router.get('/viewOrders/:id',adminAuth,orderController.viewOrders)
+router.post('/orders/cancelProduct',adminAuth,orderController.cancelProductOrder)
+router.post('/orders/update-status',adminAuth,orderController.updateProductOrderStatus)
+
+
+router.get('/viewOrderDetails/:id',adminAuth,orderController.viewOrderDetails);
+router.post('/orders/updateOrderStatus',adminAuth,orderController.updateOrderStatus);
+router.post('/orders/cancelOrder',adminAuth,orderController.cancelOrder)
+router.post('/orders/handle-return',adminAuth,orderController.handleReturnRequest)
+router.post('/orders/update-return-status',adminAuth,orderController.updateReturnStatus)
 
 
 

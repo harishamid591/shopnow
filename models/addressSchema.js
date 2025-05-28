@@ -9,11 +9,15 @@ const addressSchema = new Schema({
         required:true
     },
     address:[{
-        houseName:{
+        name:{
             type:String,
             required: true
         },
-        city:{
+        phone:{
+            type:Number,
+            required:true
+        },
+        streetAddress:{
             type:String,
             required:true
         },
@@ -21,17 +25,25 @@ const addressSchema = new Schema({
             type:String,
             required:true
         },
+        city:{
+            type:String,
+            required:true
+        },
         state:{
             type:String,
             required:true
         },
-        pin:{
+        country:{
+            type:String,
+            required: true
+        },
+        pincode:{
             type: Number,
             required: true
         },
-        phone:{
-            type:Number,
-            required:true
+        isDefault:{
+            type:Boolean,
+            default:'false'
         }
     }],
 },{

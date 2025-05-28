@@ -24,13 +24,9 @@ const productSchema = new Schema({
         ref:'Category',
         // required:true
     },
-    // quantity:{
-    //     type:Number,
-    //     required:true
-    // },
     brand:{
         type:String,
-        // required:true
+  
     },
     discount:{
         type:Number,

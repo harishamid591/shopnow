@@ -1,7 +1,7 @@
 const userModel = require("../models/userSchema");
 
 const userAuth = (req, res, next) => {
-
+   
     if (req.session.user) {
         userModel.findById(req.session.user)
             .then((data) => {
@@ -67,9 +67,40 @@ const isUserLoggedIn = async(req, res, next)=>{
     }
 }
 
+const ajaxAuth = (req, res, next) => {
+    if (req.session.user) {
+      userModel.findById(req.session.user)
+        .then((user) => {
+          if (user && !user.isBlocked) {
+            next();
+          } else {
+            delete req.session.user;
+            res.status(401).json({ 
+              status: false, 
+              message: "User is blocked or not found" 
+            });
+          }
+        })
+        .catch((error) => {
+          console.log("Ajax Auth Error", error);
+          res.status(500).json({ 
+            status: false, 
+            message: "Internal server error" 
+          });
+        });
+    } else {
+      res.json({ 
+        success: false, 
+        message: "User not logged in" 
+      });
+    }
+  };
+
+
 module.exports = { 
     userAuth, 
     adminAuth, 
     isUserBlocked,
-    isUserLoggedIn 
+    isUserLoggedIn,
+    ajaxAuth 
 };

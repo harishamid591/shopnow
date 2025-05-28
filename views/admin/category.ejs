@@ -24,10 +24,16 @@
   <!-- Search Form -->
   <form class="mb-4" method="GET" action="/admin/category">
     <div class="input-group">
-      <input type="text" class="form-control" name="search" placeholder="Search category..."
+      <input type="text" class="form-control" id="searchInput" name="search" placeholder="Search category..."
         value="<%= typeof search !== 'undefined' ? search : '' %>">
+      
+      <!-- Search Button -->
       <button class="btn btn-outline-secondary" type="submit">Search</button>
+      
+      <!-- Clear Button with redirect -->
+      <a href="/admin/category" class="btn btn-outline-danger">Clear</a>
     </div>
+    
   </form>
 
   <!-- Category Cards -->
@@ -41,6 +47,8 @@
           <div class="card-footer d-flex justify-content-center gap-2">
             <button class="btn btn-success btn-sm"
               onclick='openEditModal(<%- JSON.stringify(category) %>)'>Edit</button>
+
+              
 
             <!-- Delete with SweetAlert confirmation -->
             <button class="btn btn-danger btn-sm" onclick="confirmDelete('<%= category._id %>')">Delete</button>
@@ -84,14 +92,16 @@
 
         <div class="modal-body">
           <div class="mb-3">
-            <div id="nameError" class="text-danger mt-1"></div>
+           
             <label for="categoryName" class="form-label">Name</label>
-            <input type="text" class="form-control" id="categoryName" name="categoryName" required>
+            <div id="nameError" class="text-danger mt-1"></div>
+            <input type="text" class="form-control" id="categoryName" name="categoryName" >
           </div>
 
           <div class="mb-3">
-            <div id="imageError" class="text-danger mt-1"></div>
+            
             <label for="categoryImage" class="form-label">Image</label>
+            <div id="imageError" class="text-danger mt-1"></div>
             <input class="form-control" type="file" id="categoryImage" name="image" accept="image/*">
             <input type="hidden" name="image" id="existingImage">
             <div class="mb-3" id="existingImageContainer" style="display: none;">

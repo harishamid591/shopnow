@@ -8,19 +8,25 @@
   }
 
   .search-form {
-    max-width: 500px;
-    margin: 0 auto;
-  }
+  max-width: 500px;
+  margin: 0 auto;
+}
 
-  .search-form .form-control {
-    border-radius: 20px 0 0 20px;
-  }
+.search-form .form-control {
+  border-radius: 20px 0 0 20px;
+}
 
-  .search-form .btn {
-    background-color: orange;
-    color: white;
-    border-radius: 0 20px 20px 0;
-  }
+.search-form .search-btn {
+  color: white;
+  border-radius: 0;
+}
+
+.search-form .clear-btn {
+  background-color: red;
+  color: white;
+  border-radius: 0 20px 20px 0;
+  text-decoration: none;
+}
 
   .table th, .table td {
     vertical-align: middle;
@@ -124,7 +130,12 @@
   <header class="card-header text-center mb-4">
     <form action="/admin/users" method="get" class="search-form d-flex">
       <input type="text" class="form-control" placeholder="Search customers..." name="search">
-      <button class="btn" type="submit">Search</button>
+      
+    <!-- Search Button -->
+    <button class="btn btn-outline-secondary" type="submit">Search</button>
+      
+    <!-- Clear Button with redirect -->
+    <a href="/admin/users" class="btn btn-outline-danger">Clear</a>
     </form>
   </header>
 

@@ -17,6 +17,9 @@ const productDetails = async (req, res) => {
             return res.redirect("/pageNotFound");
         }
 
+        if(product.isBlocked){
+            return res.redirect('/allProducts');
+        }
 
         const recommendedProducts = await productModel.find({
             category: product.category._id,

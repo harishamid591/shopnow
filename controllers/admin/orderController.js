@@ -1,0 +1,490 @@
+const orderModel = require('../../models/orderSchema');
+const productModel = require('../../models/productSchema');
+const userModel = require("../../models/userSchema");
+
+const getOrders = async (req, res) => {
+  try {
+
+    const ordersData = await orderModel.find({})
+      .populate('orderedItems.product') // populates product info
+      .sort({ createdOn: -1 });
+
+
+    const orders = ordersData.map(order => {
+      return {
+        _id: order.orderId,
+        date: order.invoiceDate.toISOString().split('T')[0],
+        customerName: order.address.name,
+        products: order.orderedItems.map(item => ({
+          name: item.product?.productName || "Unknown Product",
+          image: item.product?.productImage?.[0] || "/images/default.jpg",
+          quantity: item.quantity || 1,
+          itemId: item._id,
+          amount: (item.price * item.quantity).toFixed(2),
+          status: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+          requestStatus: item.requestStatus
+        })),
+        amount: order.finalAmount,
+        status: order.status.charAt(0).toUpperCase() + order.status.slice(1)
+      };
+    });
+
+    res.render('admin-orders', {
+      orders,
+      currentPage: 1,
+      totalPages: 2
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).send("Something went wrong while fetching orders.");
+  }
+};
+
+
+const viewOrders = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const productId = req.query.productId;
+
+    // Fetch the order with all products populated
+    const order = await orderModel.findOne({ _id: orderId });
+
+
+    if (!order) {
+      return res.status(404).send("Order not found");
+    }
+
+    const userData = await userModel.findById(order.userId);
+
+    // Find the matching product from orderedItems
+    const productItem = order.orderedItems.find(item => item._id.toString() === productId);
+
+    if (!productItem) {
+      return res.status(404).send("Product not found in this order");
+    }
+
+
+    // Prepare the formatted order data with only the selected product
+    const formattedOrder = {
+      _id: order._id,
+      status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+      date: order.invoiceDate.toISOString().split('T')[0],
+      customerName: order.address.name,
+      address: `${order.address.streetAddress}, ${order.address.town}, ${order.address.city}, ${order.address.state}, ${order.address.country} - ${order.address.pincode}`,
+      phone: order.address.phone,
+      email: userData?.email || 'Not Provided',
+      subtotal: order.totalPrice,
+      shipping: order.deliveryCharge || 0,
+      amount: order.finalAmount,
+      product: {
+        name: productItem.productName || "Unknown Product",
+        quantity: productItem.quantity,
+        price: productItem?.price || 0,
+        image: productItem?.productImages?.[0] || "/images/default.jpg",
+        amount: (productItem.price * productItem.quantity).toFixed(2),
+        status: productItem.status.charAt(0).toUpperCase() + productItem.status.slice(1),
+        itemId: productItem._id,
+        requestStatus: productItem.requestStatus
+      }
+    };
+
+
+    res.render('admin-order-details', { order: formattedOrder });
+
+  } catch (error) {
+    console.error("Error fetching order details:", error);
+    res.status(500).send("Something went wrong while fetching order details.");
+  }
+};
+
+const cancelProductOrder = async (req, res) => {
+  try {
+    const { orderId, itemId } = req.body;
+
+
+    // Find the order belonging to the user
+    const order = await orderModel.findOne({ orderId: orderId });
+
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Find the item within the orderedItems array
+    const itemIndex = order.orderedItems.findIndex(item => item._id.toString() === itemId);
+    if (itemIndex === -1) {
+      return res.status(404).json({ message: "Ordered item not found" });
+    }
+
+    const item = order.orderedItems[itemIndex];
+
+    // If already cancelled
+    if (item.status === "cancelled") {
+      return res.status(400).json({ message: "This item is already cancelled" });
+    }
+
+    // Update item status to cancelled
+    order.orderedItems[itemIndex].status = "cancelled";
+    order.orderedItems[itemIndex].cancelledAt = new Date();
+
+     // Adjust total and final price
+     const cancelledAmount = item.totalProductPrice || (item.price * item.quantity);
+     order.totalOrderPrice -= cancelledAmount;
+     order.finalAmount -= cancelledAmount;
+ 
+     // Ensure prices don’t go negative
+     if (order.totalOrderPrice < 0) order.totalOrderPrice = 0;
+     if (order.finalAmount < 0) order.finalAmount = 0;
+
+    // Restore stock
+    const product = await productModel.findById(item.product);
+    if (product) {
+      product.stock += item.quantity;
+      await product.save();
+    }
+
+    // Save updated order
+    await order.save();
+
+    res.status(200).json({ success: true, message: "Order item cancelled successfully" });
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+const updateProductOrderStatus = async (req, res) => {
+  try {
+    const { orderId, status, itemId } = req.body;
+
+    const order = await orderModel.findOne({ orderId: orderId })
+
+    const itemIndex = order.orderedItems.findIndex(item => item._id.toString() === itemId)
+
+    if (itemIndex === -1) {
+      return res.status(404).json({ message: "Ordered item not found" });
+    }
+
+    const item = order.orderedItems[itemIndex];
+
+    if (item.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Cannot update cancelled order' })
+    }
+
+    item.status = status
+
+    item.updatedOn = new Date()
+
+    if (status === 'delivered') {
+      item.deliveredOn = new Date()
+    }
+
+    await order.save()
+
+    // Check if all items now have the same status
+    const allSameStatus = order.orderedItems.every(
+      p => p.status === status || p.status === 'cancelled'
+    );
+
+    // Only update the order status if all non-cancelled products match the updated status
+    if (allSameStatus && status !== 'cancelled') {
+      order.status = status;
+      order.updatedOn = new Date();
+
+      if (status === 'delivered') {
+        order.deliveredOn = new Date();
+      }
+
+      await order.save(); // save again with updated order status
+    }
+
+    res.json({ success: true, message: "Product status updated successfully" });
+
+  } catch (error) {
+    console.error("Error updating order status:", error)
+    res.status(500).json({ success: false, message: "Internal server error" })
+  }
+}
+
+//admin orders
+const viewOrderDetails = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+
+    const order = await orderModel.findOne({orderId})
+      .populate('orderedItems.product')
+      .lean();
+
+
+    if (!order) {
+      return res.status(404).send('Order not found');
+    }
+
+    const userId = order.userId;
+
+    userData = await userModel.findById(userId);
+
+    // Format data for the view
+    const formattedOrder = {
+      _id: order.orderId,
+      status: order.status,
+      shipping: order.deliveryCharge,
+      customerName: order.address?.name || 'Customer',
+      address: `${order.address?.streetAddress || ''}, ${order.address?.town || ''}, ${order.address?.city || ''}, ${order.address?.state || ''}, ${order.address?.country || ''}, ${order.address?.pincode || ''}`,
+      phone: order.address?.phone,
+      email: userData.email || 'Not Provided',
+      products: order.orderedItems.map(item => ({
+        itemId: item._id,
+        name: item.productName,
+        quantity: item.quantity,
+        price: item.price,
+        image: item.productImages[0] || item.product?.productImage?.[0] || '/images/no-image.png',
+        status: item.status,
+        amount: item.totalProductPrice,
+        returnReason: item.returnReason,
+        returnDescription: item.returnDescription,
+        returnImages:item.returnImages,
+        requestStatus: item.requestStatus
+      })),
+      total: order.totalOrderPrice,
+      finalAmount: order.finalAmount,
+      createdOn: order.createdOn
+    };
+
+    res.render('admin-OrderDetails', { order: formattedOrder });
+
+  } catch (error) {
+    console.error('Error loading order details:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId, status } = req.body;
+
+    const order = await orderModel.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const currentTime = new Date();
+
+    // Update order-level status
+    order.status = status;
+    order.updatedOn = currentTime;
+
+    if (status === 'delivered') {
+      order.deliveredOn = currentTime;
+    }
+
+    // Update status for all non-cancelled products in orderedItems
+    order.orderedItems = order.orderedItems.map(item => {
+      if (item.status === 'cancelled') {
+        return item; // leave cancelled item unchanged
+      }
+
+      return {
+        ...item.toObject(),
+        status,
+        updatedOn: currentTime,
+        deliveredOn: status === 'delivered' ? currentTime : item.deliveredOn,
+      };
+    });
+
+    await order.save();
+
+    return res.json({ success: true, message: 'Order and product statuses updated successfully' });
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+const cancelOrder = async (req, res) => {
+  try {
+    const { orderId, reason } = req.body;
+
+    const order = await orderModel.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Order is already cancelled' });
+    }
+
+    // Update each product's stock and item status
+    for (const item of order.orderedItems) {
+      if (item.status !== 'cancelled') {
+        item.status = 'cancelled';
+        item.cancelReason = reason || 'Cancelled by admin';
+        item.cancelledAt = new Date();
+        item.updatedOn = new Date();
+
+        // Increment product stock
+        const product = await productModel.findById(item.product);
+        if (product) {
+          product.stock += item.quantity;
+          await product.save();
+        }
+      }
+    }
+
+    // Update main order status
+    order.status = 'cancelled';
+    order.cancelReason = reason || 'Cancelled by admin';
+    order.updatedOn = new Date();
+
+    await order.save();
+
+    res.json({ success: true, message: 'Order cancelled and stock updated successfully' });
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+const handleReturnRequest = async (req, res) => {
+  try {
+    const { orderId, productId, action, rejectionCategory, rejectionReason } = req.body;
+
+    const order = await orderModel.findOne({orderId});
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    const itemIndex = order.orderedItems.findIndex(
+      (item) => item._id.toString() === productId
+    );
+
+    if (itemIndex === -1) {
+      return res.status(404).json({ success: false, message: "Product not found in order" });
+    }
+
+    const item = order.orderedItems[itemIndex];
+
+    if (item.status !== 'return_requested') {
+      return res.status(400).json({ success: false, message: "This product is not in return request state" });
+    }
+
+    if (action === 'approve') {
+      item.requestStatus = 'approved';
+      item.status = 'returning';
+    } else if (action === 'reject') {
+      item.requestStatus = 'rejected';
+      item.status = 'delivered'; // Rollback to previous delivered state
+      item.rejectionCategory = rejectionCategory;
+      item.rejectionReason = rejectionReason;
+      item.returnImages = [];
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid action" });
+    }
+
+    // Update overall order status if any item is still in return_requested or returning state
+    const hasReturnRequestedItem = order.orderedItems.some(
+      (item) => item.status === 'return_requested' || item.status === 'returning'
+    );
+
+    order.status = hasReturnRequestedItem ? 'return_requested' : 'delivered';
+    item.updatedOn = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: `Return ${action === 'approve' ? 'approved' : 'rejected'} successfully.`,
+    });
+  } catch (error) {
+    console.error("Error handling return request:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+const updateReturnStatus = async (req, res) => {
+  try {
+    const { orderId, productId, status } = req.body;
+
+    const order = await orderModel.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const itemIndex = order.orderedItems.findIndex(
+      (item) => item._id.toString() === productId
+    );
+
+    if (itemIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found in order",
+      });
+    }
+
+    const item = order.orderedItems[itemIndex];
+
+    // Only allow status updates to 'returning' or 'returned'
+    if (!['returning', 'returned'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status provided",
+      });
+    }
+
+    item.status = status;
+    item.updatedOn = new Date();
+
+    // Update overall order status if any item is still in return flow
+    const stillReturning = order.orderedItems.some(
+      (i) => i.status === 'return_requested' || i.status === 'returning'
+    );
+
+    order.status = stillReturning ? 'return_requested' : 'delivered';
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: `Return status updated to '${status}' successfully.`,
+    });
+  } catch (error) {
+    console.error("Error updating return status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+module.exports = {
+  getOrders,
+  viewOrders,
+  cancelProductOrder,
+  updateProductOrderStatus,
+  viewOrderDetails,
+  updateOrderStatus,
+  cancelOrder,
+  handleReturnRequest,
+  updateReturnStatus
+};
+
+
+
+
+
+
+
+
+
+
+
+

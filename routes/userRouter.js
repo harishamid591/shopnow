@@ -1,10 +1,48 @@
 const express = require('express')
 const userController = require('../controllers/user/userController')
 const productController = require('../controllers/user/productController')
+const profileController = require('../controllers/user/profileController')
+const addressController = require('../controllers/user/addressController')
+const cartController = require('../controllers/user/cartController')
+const checkoutController = require('../controllers/user/checkoutController')
+const orderController = require('../controllers/user/orderController')
+const wishlistController = require('../controllers/user/wishlistController')
 const passport = require('passport')
-const { isUserBlocked, isUserLoggedIn } = require('../middleware/auth')
+const { userAuth, isUserBlocked, isUserLoggedIn, ajaxAuth } = require('../middleware/auth')
+const { forgotPassLogout } = require('../middleware/profileAuth')
 const router = express.Router()
+const multer = require("multer");
+const path = require("path");
 
+
+// Multer setup for profile image upload
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, "public/uploads/profileImages/");
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      const filename = `${req.session.user}_${Date.now()}${ext}`;
+      cb(null, filename);
+    },
+  });
+  
+  const upload = multer({ storage });
+
+
+//Return Image
+const storageReturnImage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, "public/uploads/returnImages/");
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      const filename = `${req.session.user}_${Date.now()}${ext}`;
+      cb(null, filename);
+    },
+  });
+  
+  const uploadReturnImage = multer({ storage:storageReturnImage });
 
 
 
@@ -35,7 +73,6 @@ router.get('/auth/google/callback', passport.authenticate('google', { failureRed
     
 });
 
-
 router.post('/login',userController.userLogin);
 router.get('/logout',userController.logOut);
 
@@ -45,6 +82,47 @@ router.get('/allProducts',isUserBlocked,productController.allProducts)
 router.get('/filter',isUserBlocked,productController.filterProduct);
 router.get('/filterPrice',isUserBlocked,productController.filterByPrice);
 
+
+// Profile Management
+router.get('/userProfile',userAuth,profileController.userProfile)
+router.post('/update-profile',userAuth,upload.single("profileImage"),profileController.updateProfile);
+router.get('/change-email',userAuth,profileController.changeEmail);
+router.post('/change-email',userAuth,profileController.changeEmailValid);
+router.post('/verify-email-otp',userAuth,profileController.verifyEmailOtp);
+router.post('/resend-email-otp',userAuth,profileController.resendEmailOtp);
+router.post('/change-password',userAuth,profileController.changePassword);
+router.get('/forgot-password-logout',forgotPassLogout,profileController.getForgotPassPage);
+
+
+//Address Management
+router.get('/userAddress',userAuth,addressController.loadAddressPage)
+router.post('/addAddress',userAuth,addressController.addAddress)
+router.post('/editAddress',userAuth,addressController.editAddress)
+router.post('/address-delete/:id',userAuth,addressController.deleteAddress)
+
+//Cart Management
+router.get('/cart',userAuth,cartController.getCartPage)
+router.post('/addToCart',ajaxAuth,cartController.addToCart)
+router.post('/changeQuantity',userAuth,cartController.changeQuantity)
+router.post('/deleteItem/:id',userAuth,cartController.deleteItem)
+
+//Checkout
+router.get('/checkout',userAuth,checkoutController.getCheckoutPage)
+
+//Order
+router.post('/placeOrder',userAuth,orderController.placeOrder);
+router.get('/orders',userAuth,orderController.getOrders);
+router.get('/order-details/:id',userAuth,orderController.orderDetails);
+
+
+//routes for order cancellation and returns
+router.post('/orders/cancel',userAuth,orderController.cancelOrder)
+router.post('/orders/return',userAuth, uploadReturnImage.array('images', 3),orderController.retrunProduct)
+router.post('/orders/cancel-return',userAuth,orderController.cancelReturnRequest)
+router.get('/orders/invoice/:id',userAuth,orderController.generateInvoice)
+
+//Wishlist
+router.get('/wishlist',userAuth,wishlistController.getWishlist)
 
 
 
