@@ -30,6 +30,14 @@ const userSchema = new Schema({
         type:String,
         required:false
     },
+    referralCode: {
+        type: String,
+        unique: true
+    },
+    referredBy: {
+        type: String, 
+        default: null
+    },
     isBlocked:{
         type: Boolean,
         default: false     

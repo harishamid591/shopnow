@@ -9,8 +9,8 @@ const couponSchema = new Schema({
     },
     createdOn:{
         type: Date,
-        default: Date.now,
-        required: true
+        // default: Date.now,
+        // required: true
     },
     expireOn:{
         type: Date,
@@ -22,11 +22,19 @@ const couponSchema = new Schema({
     },
     minimumPrice:{
         type: Number,
-        required: true
+        // required: true
     },
     isList:{
         type: Boolean,
         default: true
+    },
+    isReferralCoupon:{
+        type:Boolean,
+        default:false
+    },
+    isUsed:{
+        type:Boolean,
+        default:false
     },
     userId:[{
         type: mongoose.Schema.Types.ObjectId,

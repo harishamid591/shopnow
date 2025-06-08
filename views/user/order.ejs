@@ -205,13 +205,13 @@
           <a href="/orders"><i class="fa-solid fa-receipt"></i> Orders</a>
         </li>
         <li class="<%= currentPage === 'wishlist' ? 'active' : '' %>">
-          <a href="/account/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a>
+          <a href="/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a>
         </li>
         <li class="<%= currentPage === 'coupons' ? 'active' : '' %>">
-          <a href="/account/coupons"><i class="fa-solid fa-gift"></i> Coupons</a>
+          <a href="/coupons"><i class="fa-solid fa-gift"></i> Coupons</a>
         </li>
         <li class="<%= currentPage === 'wallet' ? 'active' : '' %>">
-          <a href="/account/wallet"><i class="fa-regular fa-credit-card"></i> Wallet</a>
+          <a href="/wallet"><i class="fa-regular fa-credit-card"></i> Wallet</a>
         </li>
         <li>
           <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
@@ -221,8 +221,22 @@
 
     <!-- Main Content -->
     <div class="main-content shadow-sm">
-      <div class="main-heading">My Orders</div>
-
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h2 class="main-heading mb-0">My Orders</h2>
+        <form class="d-flex" action="/orders" method="GET" role="search">
+          <input
+            type="text"
+            name="search"
+            class="form-control me-2"
+            placeholder="Search orders..."
+            style="min-width: 220px;"
+          />
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-search"></i>
+          </button>
+        </form>
+      </div>
+      
       <% 
       // Group orders by _id (orderId)
       let groupedOrders = {};
@@ -233,6 +247,7 @@
       let hasOrders = orderIds.length > 0;
       %>
 
+     
       <% if (hasOrders) { %>
         <% orderIds.forEach(orderId => {
           let order = groupedOrders[orderId];
@@ -243,9 +258,13 @@
         <div class="order-card">
           <div class="order-header">
             <div class="order-info">
-              <div><strong>Order ID:</strong> <%= order._id %></div>
+              <div><strong>Order ID:</strong> <%= order.orderId %></div>
               <div><strong>Placed On:</strong> <%= new Date(order.createdOn).toLocaleDateString() %></div>
+              <div><strong>Payment Method:</strong> <%= order.paymentMethod %></div>
               <div><strong>Total Amount:</strong> ₹<%= totalAmount.toFixed(2) %></div>
+              <% if (order.couponApplied && order.couponName) { %>
+                <div class="text-success"><strong>Coupon Applied:</strong> <%= order.couponName %></div>
+              <% } %>
            <% if (order.status.toLowerCase() === 'delivered') { %>
                 <div class="text-success"><strong>Delivered On:</strong> <%= new Date(order.deliveredOn).toLocaleDateString() %></div>
            <% } %>

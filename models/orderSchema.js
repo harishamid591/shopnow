@@ -60,6 +60,10 @@ const orderSchema = new Schema({
         deliveredOn:{
             type:Date
         },
+        restocked:{
+            type:Boolean,
+            default:false
+        },
         returnReason:{
             type:String
         },
@@ -94,7 +98,6 @@ const orderSchema = new Schema({
     },
     deliveryCharge: {
         type: Number,
-        default: 50
     },
     finalAmount: {
         type: Number,
@@ -155,6 +158,9 @@ const orderSchema = new Schema({
     couponApplied: {
         type: Boolean,
         default: false
+    },
+    couponName:{
+        type:String
     }
 })
 

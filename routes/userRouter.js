@@ -7,6 +7,8 @@ const cartController = require('../controllers/user/cartController')
 const checkoutController = require('../controllers/user/checkoutController')
 const orderController = require('../controllers/user/orderController')
 const wishlistController = require('../controllers/user/wishlistController')
+const walletController = require('../controllers/user/walletController')
+const couponsController = require('../controllers/user/couponsController')
 const passport = require('passport')
 const { userAuth, isUserBlocked, isUserLoggedIn, ajaxAuth } = require('../middleware/auth')
 const { forgotPassLogout } = require('../middleware/profileAuth')
@@ -108,6 +110,7 @@ router.post('/deleteItem/:id',userAuth,cartController.deleteItem)
 
 //Checkout
 router.get('/checkout',userAuth,checkoutController.getCheckoutPage)
+router.get('/check-stock',userAuth, checkoutController.checkStock);
 
 //Order
 router.post('/placeOrder',userAuth,orderController.placeOrder);
@@ -120,9 +123,27 @@ router.post('/orders/cancel',userAuth,orderController.cancelOrder)
 router.post('/orders/return',userAuth, uploadReturnImage.array('images', 3),orderController.retrunProduct)
 router.post('/orders/cancel-return',userAuth,orderController.cancelReturnRequest)
 router.get('/orders/invoice/:id',userAuth,orderController.generateInvoice)
+//razorpay
+router.post('/create-razorpay-order', userAuth, orderController.createRazorpayOrder);
+router.post('/verify-payment', userAuth, orderController.verifyPayment);
 
 //Wishlist
-router.get('/wishlist',userAuth,wishlistController.getWishlist)
+router.get('/wishlist',userAuth,wishlistController.getWishlist);
+router.post('/addToWishlist',ajaxAuth,wishlistController.addToWishlist)
+router.get("/removeFromWishList",userAuth,wishlistController.removeProduct)
+
+
+//Coupons
+router.get('/coupons',userAuth,couponsController.loadCoupon)
+router.post('/apply-coupon',userAuth,couponsController.applyCoupon)
+
+
+
+//Wallet
+router.get('/wallet',userAuth,walletController.getWallet)
+router.post('/wallet/create-razorpay-order',userAuth,walletController.createWalletRazorpayOrder)
+router.post('/wallet/verify-payment',userAuth,walletController.verifyPayment)
+router.post('/place-wallet-order',userAuth,walletController.placeWalletOrder)
 
 
 

@@ -1,0 +1,81 @@
+
+        // async function processCODOrder(orderData) {
+
+        //     try {
+        //         const response = await fetch('/placeOrder', {
+        //             method: 'POST',
+        //             headers: { 'Content-Type': 'application/json' },
+        //             body: JSON.stringify(orderData)
+        //         });
+
+        //         if (!response.ok) throw new Error('Order placement failed.');
+
+        //         const result = await response.json();
+
+        //         if (result.success) {
+        //             Swal.fire('Order Placed!', 'Your order has been placed successfully.', 'success')
+        //             Swal.fire({
+        //                 title: 'Your order has been placed successfully!',
+        //                 text: `Order IDs: ${result.orderId}`,
+        //                 icon: 'success',
+        //                 confirmButtonText: 'View Orders'
+        //             })
+        //                 .then((result) => {
+        //                     if (result.isConfirmed) {
+        //                         window.location.href = '/orders';
+        //                     }
+        //                 });
+        //         } else {
+        //             Swal.fire('Error', result.message || 'Failed to place order.', 'error');
+        //         }
+        //     } catch (error) {
+        //         Swal.fire('Error', error.message, 'error');
+        //     }
+        // }
+
+    //     function processRazorpayOrder(orderData) {
+    //         // First create order on server
+    //         fetch('/create-razorpay-order', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify(orderData)
+    //         })
+    //             .then(response => response.json())
+    //             .then(data => {
+    //                 if (data.success) {
+    //                     const options = {
+    //                         key: data.razorpayKeyId, // Your Razorpay Key ID
+    //                         amount: data.amount,
+    //                         currency: data.currency,
+    //                         name: 'PC Monarch',
+    //                         image: 'img/pc-logo.png',
+    //                         description: 'Purchase Description',
+    //                         order_id: data.orderId,
+    //                         handler: function (response) {
+    //                             // Handle successful payment
+    //                             verifyPayment(response, orderData);
+    //                         },
+    //                         prefill: {
+    //                             name: data.customerName,
+    //                             email: data.customerEmail,
+    //                             contact: data.customerPhone
+    //                         },
+    //                         theme: {
+    //                             color: '#F37254'
+    //                         }
+    //                     };
+    //                     const rzp = new Razorpay(options);
+    //                     rzp.open();
+    //                 } else {
+    //                     Swal.fire('Error', data.message || 'An error occurred while creating the order', 'error');
+    //                 }
+    //             })
+    //             .catch(error => {
+    //                 console.error('Error:', error);
+    //                 Swal.fire('Error', 'An error occurred while processing the payment', 'error');
+    //             });
+    //     }
+
+    // });

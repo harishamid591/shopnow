@@ -20,6 +20,17 @@
         color: #007bff;
         text-decoration: underline;
     }
+    .wishlist-icon i {
+    transition: color 0.3s ease;
+  }
+
+  .wishlist-icon:hover i {
+    color: red;
+  }
+
+  .wishlist-icon.selected i {
+    color: red;
+  }
 </style>
 
 <!-- Breadcrumb -->
@@ -69,15 +80,15 @@
             <div class="mb-3 d-flex align-items-center justify-content-between">
                 <div>
                     <span class="h4 fw-bold text-success">
-                        ₹ <%= product.price - (product.price * product.discount / 100) %>
+                        ₹ <%= product.price - (product.price * product.effectiveDiscount / 100) %>
                       </span>
                       
-                      <% if (product.price && product.discount) { %>
+                      <% if (product.price && product.effectiveDiscount) { %>
                         <small class="text-muted text-decoration-line-through ms-2">
                           MRP ₹<%= product.price %>
                         </small>
                         <span class="badge bg-success ms-2">
-                          <%= product.discount %>% off
+                          <%= product.effectiveDiscount %>% off
                         </span>
                       <% } %>
                 </div>
@@ -89,7 +100,14 @@
                 <button class="btn btn-outline-success" type="button" onclick="increaseQty('qty','<%= product.stock %>')">+</button>
             </div>
 
-            <a class="btn text-light btn-primary mb-3" href="#" onclick="addToCart('<%= product._id %>', 'qty')">Add to Cart</a>
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <a class="btn text-light btn-primary" href="#" onclick="addToCart('<%= product._id %>', 'qty')">Add to Cart</a>
+                <button class="btn btn-outline-secondary wishlist-icon  <%= product.inWishlist ? 'selected' : '' %>" 
+                    onclick="addToWishlist('<%= product._id %>', this)" title="Add to Wishlist">
+                <i class="fa fa-heart"></i>
+            </button>
+            </div>
+            
 
             <input type="hidden" id="stock" value="<%= product.stock %>">
             <% if (product.stock === 0) { %>
@@ -126,9 +144,17 @@
         <% recommendedProducts.forEach((rp, index) => { %>
         <div class="col">
             <div class="card h-100 shadow-sm p-2 d-flex flex-column justify-content-between position-relative">
-                <% if (rp.discount) { %>
-                    <span class="badge bg-success position-absolute" style="top: 10px; right: 10px;">-<%= rp.discount %>%</span>
-                <% } %>
+                <% if(rp.stock === 0) { %>
+                    <span class="badge bg-danger position-absolute" style="top: 10px; right: 10px; z-index: 3;">Out of Stock</span>
+                  <% } else if(rp.effectiveDiscount) { %>
+                    <span class="badge bg-success position-absolute" style="top: 10px; right: 10px; z-index: 3;">-<%= rp.effectiveDiscount %>%</span>
+                  <% } %>
+
+                   <!-- Wishlist Icon on top of image -->
+                   <a href="#" onclick="addToWishlist('<%=rp._id%>')" class="btn btn-sm btn-light border rounded-circle position-absolute"
+                    style="top: 10px; left: 10px; z-index: 3;">
+                    <i class="fas fa-heart text-danger"></i>
+                  </a>
 
                 <a href="/productDetails/<%= rp._id %>">
                     <img src="<%= rp.productImage[0] %>" alt="<%= rp.productName %>" class="card-img-top img-fluid"
@@ -139,13 +165,9 @@
                     <h6 class="card-title text-truncate fw-semibold"><%= rp.productName %></h6>
                     <div class="text-start mb-2">
                         <span class="fw-bold text-success">
-                            ₹<%= rp.price - (rp.price * rp.discount / 100) %>
+                            ₹<%= rp.price - (rp.price * rp.effectiveDiscount / 100) %>
                           </span>
-                          <% if (rp.discount) { %>
-                            <small class="text-muted text-decoration-line-through ms-2">
-                              ₹<%= rp.price %>
-                            </small>
-                          <% } %>
+                          
                     </div>
 
                     <div class="d-flex align-items-center justify-content-between">
@@ -218,6 +240,57 @@
                 }
         });
     }
+
+        // Add to wishlist function
+function addToWishlist(productId,el) {
+  $.ajax({
+    url: '/addToWishlist',
+    method: "POST",
+    data: { productId: productId },
+    success: (response) => {
+      if (response.status) {
+        Swal.fire({
+          title: "Added to Wishlist",
+          text: "The product has been added to your wishlist.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+        if (el) {
+          el.classList.add('selected');
+        }
+      } else {
+        Swal.fire({
+          title: "Already in Wishlist",
+          text: response.message,
+          icon: "info",
+          timer: 2000,
+          showConfirmButton: false
+        });
+        if (el) {
+          el.classList.add('selected');
+        }
+      }
+    },
+    error: (xhr) => {
+      if (xhr.status === 401) {
+        handleAuthError(
+          "Not Logged In",
+          "You need to log in to add items to your wishlist."
+        );
+      } else {
+        Swal.fire({
+          title: "Error",
+          text: "There was an error adding the product to your wishlist.",
+          icon: "error",
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
+    }
+  });
+}
 </script>
                
 <%- include("../../views/partials/user/footer") %>

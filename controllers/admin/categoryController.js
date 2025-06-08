@@ -46,7 +46,7 @@ const addCategory = async (req, res) => {
  
     try {
 
-        const { categoryName } = req.body;
+        const { categoryName, offer } = req.body;
 
         const existsCategory = await categoryModel.findOne({categoryName});
     
@@ -67,7 +67,8 @@ const addCategory = async (req, res) => {
     
         const newCategory = new categoryModel({
             categoryName:categoryName,
-            categoryImage:imagePath
+            categoryImage:imagePath,
+            categoryOffer: offer
         })
     
         await newCategory.save();
@@ -89,7 +90,7 @@ const editCategory = async (req,res)=>{
 
         const categoryId = req.params.id;
 
-        const {categoryName} = req.body
+        const {categoryName, offer} = req.body
 
         const existingCategory = await categoryModel.findOne({
             _id: { $ne: categoryId },
@@ -113,13 +114,14 @@ const editCategory = async (req,res)=>{
 
             const updateData = {
                 categoryName:categoryName,
-                categoryImage:imagePath
+                categoryImage:imagePath,
+                categoryOffer: offer
             }
 
             await categoryModel.updateOne({_id:categoryId},{$set:updateData})
         }else{
             
-            await categoryModel.updateOne({_id:categoryId},{categoryName:categoryName});
+            await categoryModel.updateOne({_id:categoryId},{categoryName:categoryName, categoryOffer:offer});
         }
 
         return res.json({ success:true, message:'Category edited successfully' });

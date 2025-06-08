@@ -195,7 +195,7 @@ body {
 }
 
 /* Wishlist Icon */
-.btn-wishlist {
+/* .btn-wishlist {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -207,14 +207,14 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #e63946; /* Heart icon color */
+    color: #e63946; 
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .btn-wishlist:hover {
     background-color: #e63946;
     border-color: #e63946;
-    color: #fff; /* Icon turns white on hover */
+    color: #fff; 
 }
 
 .btn-wishlist i {
@@ -223,14 +223,14 @@ body {
 }
 
 .btn-wishlist:hover i {
-    transform: scale(1.2); /* Slight zoom on hover */
+    transform: scale(1.2);
 }
 
 .product-item .badge {
     top: 10px;
     right: 10px;
     font-size: 0.875rem;
-}
+} */
 
 /* Category Section */
 section.py-5.overflow-hidden {

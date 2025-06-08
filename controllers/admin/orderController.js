@@ -1,13 +1,36 @@
+const couponModel = require('../../models/couponSchema');
 const orderModel = require('../../models/orderSchema');
 const productModel = require('../../models/productSchema');
 const userModel = require("../../models/userSchema");
+const { creditWallet } = require('../../helper/refundWallet');
 
 const getOrders = async (req, res) => {
   try {
 
-    const ordersData = await orderModel.find({})
+    const query = {}
+
+    const search = req.query.search || '';
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5; // You can change this as needed
+    const skip = (page - 1) * limit;
+
+    if(req.query.search){
+      query.$or = [
+        { orderId: { $regex: new RegExp(search, 'i') } },
+        { 'address.name': { $regex: new RegExp(search, 'i') } }
+      ];
+
+    }
+
+    // Count total matching documents
+    const totalOrders = await orderModel.countDocuments(query);
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    const ordersData = await orderModel.find(query)
       .populate('orderedItems.product') // populates product info
-      .sort({ createdOn: -1 });
+      .sort({ createdOn: -1 })
+      .skip(skip)
+      .limit(limit);
 
 
     const orders = ordersData.map(order => {
@@ -31,8 +54,8 @@ const getOrders = async (req, res) => {
 
     res.render('admin-orders', {
       orders,
-      currentPage: 1,
-      totalPages: 2
+      currentPage: page,
+      totalPages
     });
   } catch (error) {
     console.error("Error fetching orders:", error);
@@ -48,7 +71,6 @@ const viewOrders = async (req, res) => {
 
     // Fetch the order with all products populated
     const order = await orderModel.findOne({ _id: orderId });
-
 
     if (!order) {
       return res.status(404).send("Order not found");
@@ -146,6 +168,18 @@ const cancelProductOrder = async (req, res) => {
     // Save updated order
     await order.save();
 
+    // Refund to wallet if applicable
+    if (['online', 'wallet'].includes(order.paymentMethod)) {
+      await creditWallet({
+        userId: order.userId,
+        amount: item.price * item.quantity,
+        orderId: order.orderId,
+        productId: item._id.toString(),
+        purpose: 'cancellation',
+        description: `Refund for cancelled product: ${item.productName}`
+      });
+    }
+  
     res.status(200).json({ success: true, message: "Order item cancelled successfully" });
   } catch (error) {
     console.error("Error cancelling order:", error);
@@ -207,24 +241,95 @@ const updateProductOrderStatus = async (req, res) => {
 }
 
 //admin orders
+// const viewOrderDetails = async (req, res) => {
+//   try {
+//     const orderId = req.params.id;
+
+//     const order = await orderModel.findOne({orderId})
+//       .populate('orderedItems.product')
+//       .lean();
+
+
+//     if (!order) {
+//       return res.status(404).send('Order not found');
+//     }
+
+//     const couponName = order.couponName
+
+//     const coupon = await couponModel.findOne({name:couponName});
+
+//     const userId = order.userId;
+
+//     userData = await userModel.findById(userId);
+
+//     // Format data for the view
+//     const formattedOrder = {
+//       _id: order.orderId,
+//       status: order.status,
+//       shipping: order.deliveryCharge,
+//       customerName: order.address?.name || 'Customer',
+//       address: `${order.address?.streetAddress || ''}, ${order.address?.town || ''}, ${order.address?.city || ''}, ${order.address?.state || ''}, ${order.address?.country || ''}, ${order.address?.pincode || ''}`,
+//       phone: order.address?.phone,
+//       email: userData.email || 'Not Provided',
+//       products: order.orderedItems.map(item => ({
+//         itemId: item._id,
+//         name: item.productName,
+//         quantity: item.quantity,
+//         price: item.price,
+//         image: item.productImages[0] || item.product?.productImage?.[0] || '/images/no-image.png',
+//         status: item.status,
+//         amount: item.totalProductPrice,
+//         returnReason: item.returnReason,
+//         returnDescription: item.returnDescription,
+//         returnImages:item.returnImages,
+//         requestStatus: item.requestStatus
+//       })),
+//       total: order.totalOrderPrice,
+//       finalAmount: order.finalAmount,
+//       paymentMethod: order.paymentMethod,
+//       couponApplied: order.couponApplied,
+//       createdOn: order.createdOn
+//     };
+
+//     res.render('admin-OrderDetails', { order: formattedOrder });
+
+//   } catch (error) {
+//     console.error('Error loading order details:', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// };
+
 const viewOrderDetails = async (req, res) => {
   try {
     const orderId = req.params.id;
 
-    const order = await orderModel.findOne({orderId})
+    const order = await orderModel.findOne({ orderId })
       .populate('orderedItems.product')
       .lean();
-
 
     if (!order) {
       return res.status(404).send('Order not found');
     }
 
+    const couponName = order.couponName;
+    let couponDiscount = 0;
+
+
+
+    // Get coupon discount if applied
+    if (order.couponApplied && couponName) {
+      const coupon = await couponModel.findOne({ name: couponName });
+
+
+      if (coupon) {
+        couponDiscount = Math.round(order.totalOrderPrice * (coupon.offerPrice / 100));
+      }
+    }
+
+
     const userId = order.userId;
+    const userData = await userModel.findById(userId);
 
-    userData = await userModel.findById(userId);
-
-    // Format data for the view
     const formattedOrder = {
       _id: order.orderId,
       status: order.status,
@@ -234,6 +339,7 @@ const viewOrderDetails = async (req, res) => {
       phone: order.address?.phone,
       email: userData.email || 'Not Provided',
       products: order.orderedItems.map(item => ({
+        productId: item.product._id,
         itemId: item._id,
         name: item.productName,
         quantity: item.quantity,
@@ -243,13 +349,19 @@ const viewOrderDetails = async (req, res) => {
         amount: item.totalProductPrice,
         returnReason: item.returnReason,
         returnDescription: item.returnDescription,
-        returnImages:item.returnImages,
-        requestStatus: item.requestStatus
+        returnImages: item.returnImages,
+        requestStatus: item.requestStatus,
+        restocked: item.restocked
       })),
       total: order.totalOrderPrice,
+      couponDiscount, // add discount value
       finalAmount: order.finalAmount,
+      paymentMethod: order.paymentMethod,
+      couponApplied: order.couponApplied,
+      couponName: order.couponName,
       createdOn: order.createdOn
     };
+
 
     res.render('admin-OrderDetails', { order: formattedOrder });
 
@@ -258,6 +370,7 @@ const viewOrderDetails = async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 };
+
 
 const updateOrderStatus = async (req, res) => {
   try {
@@ -302,12 +415,12 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+
 const cancelOrder = async (req, res) => {
   try {
     const { orderId, reason } = req.body;
 
     const order = await orderModel.findOne({ orderId });
-
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
@@ -316,7 +429,7 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Order is already cancelled' });
     }
 
-    // Update each product's stock and item status
+    // Cancel each item and restock
     for (const item of order.orderedItems) {
       if (item.status !== 'cancelled') {
         item.status = 'cancelled';
@@ -324,7 +437,6 @@ const cancelOrder = async (req, res) => {
         item.cancelledAt = new Date();
         item.updatedOn = new Date();
 
-        // Increment product stock
         const product = await productModel.findById(item.product);
         if (product) {
           product.stock += item.quantity;
@@ -333,19 +445,81 @@ const cancelOrder = async (req, res) => {
       }
     }
 
-    // Update main order status
+    // Update order status
     order.status = 'cancelled';
     order.cancelReason = reason || 'Cancelled by admin';
     order.updatedOn = new Date();
-
     await order.save();
 
-    res.json({ success: true, message: 'Order cancelled and stock updated successfully' });
+    // Refund if payment was made online or via wallet
+    if (['online', 'wallet'].includes(order.paymentMethod)) {
+      for (const item of order.orderedItems) {
+        // Only refund non-cancelled items (already marked above)
+        if (item.status === 'cancelled') {
+          await creditWallet({
+            userId: order.userId,
+            amount: item.price * item.quantity,
+            orderId: order.orderId,
+            productId: item._id.toString(),
+            purpose: 'cancellation',
+            description: `Refund for cancelled item By Admin: ${item.productName}`
+          });
+        }
+      }
+    }
+
+    res.json({ success: true, message: 'Order cancelled, stock updated and refund processed if applicable' });
   } catch (error) {
     console.error('Error cancelling order:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+
+// const cancelOrder = async (req, res) => {
+//   try {
+//     const { orderId, reason } = req.body;
+
+//     const order = await orderModel.findOne({ orderId });
+
+//     if (!order) {
+//       return res.status(404).json({ success: false, message: 'Order not found' });
+//     }
+
+//     if (order.status === 'cancelled') {
+//       return res.status(400).json({ success: false, message: 'Order is already cancelled' });
+//     }
+
+//     // Update each product's stock and item status
+//     for (const item of order.orderedItems) {
+//       if (item.status !== 'cancelled') {
+//         item.status = 'cancelled';
+//         item.cancelReason = reason || 'Cancelled by admin';
+//         item.cancelledAt = new Date();
+//         item.updatedOn = new Date();
+
+//         // Increment product stock
+//         const product = await productModel.findById(item.product);
+//         if (product) {
+//           product.stock += item.quantity;
+//           await product.save();
+//         }
+//       }
+//     }
+
+//     // Update main order status
+//     order.status = 'cancelled';
+//     order.cancelReason = reason || 'Cancelled by admin';
+//     order.updatedOn = new Date();
+
+//     await order.save();
+
+//     res.json({ success: true, message: 'Order cancelled and stock updated successfully' });
+//   } catch (error) {
+//     console.error('Error cancelling order:', error);
+//     res.status(500).json({ success: false, message: 'Internal server error' });
+//   }
+// };
 
 const handleReturnRequest = async (req, res) => {
   try {
@@ -452,6 +626,18 @@ const updateReturnStatus = async (req, res) => {
 
     await order.save();
 
+     // Refund to wallet only when status becomes 'returned'
+     if (status === 'returned') {
+      await creditWallet({
+        userId: order.userId,
+        amount: item.totalProductPrice,
+        orderId: order.orderId,
+        productId,
+        purpose: 'return',
+        description: 'Refund for returned product'
+      });
+    }
+
     res.json({
       success: true,
       message: `Return status updated to '${status}' successfully.`,
@@ -465,6 +651,56 @@ const updateReturnStatus = async (req, res) => {
   }
 };
 
+const addToStock = async (req, res) => {
+  try {
+    const { orderId, productId } = req.body;
+
+    // Find the order by ID
+    const order = await orderModel.findOne({ orderId });
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+
+    // Find the product in orderedItems
+    const orderedItem = order.orderedItems.find(
+      item => item.product.toString() === productId
+    );
+
+    if (!orderedItem) {
+      return res.status(404).json({ success: false, message: 'Item not found in order' });
+    }
+
+    // Check if return was approved
+    if (orderedItem.requestStatus !== 'approved') {
+      return res.status(400).json({ success: false, message: 'Item not approved for return' });
+    }
+
+    // Optional: add a flag so restock only happens once (if not using already)
+    if (orderedItem.restocked) {
+      return res.status(400).json({ success: false, message: 'Item already restocked' });
+    }
+
+    // Update product stock
+    const product = await productModel.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    product.stock += orderedItem.quantity;
+    await product.save();
+
+    // Mark item as restocked (if not in schema, add this to orderedItems schema)
+    orderedItem.restocked = true;
+    await order.save();
+
+    return res.status(200).json({ success: true, message: 'Stock updated successfully' });
+  } catch (error) {
+    console.error('Error in addToStock:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   getOrders,
   viewOrders,
@@ -474,7 +710,8 @@ module.exports = {
   updateOrderStatus,
   cancelOrder,
   handleReturnRequest,
-  updateReturnStatus
+  updateReturnStatus,
+  addToStock
 };
 
 

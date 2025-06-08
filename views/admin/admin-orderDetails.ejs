@@ -78,6 +78,12 @@
         <h6>Placed on: <span class="text-muted">
             <%= new Date(order.createdOn).toLocaleString() %>
           </span></h6>
+          <h6>Payment Method: <span class="text-muted">
+            <%= order.paymentMethod %>
+          </span></h6> 
+          <% if (order.couponApplied && order.couponName) { %>
+            <h6>Coupon Applied: <span class="text-success"><%= order.couponName %></span></h6>
+          <% } %> 
         <h6>Status:
           <span
             class="badge bg-<%= order.status === 'delivered' ? 'success' : order.status === 'pending' ? 'warning' : order.status === 'return_requested' ? 'warning': order.status === 'confirmed' ? 'primary' : order.status === 'shipped' ? 'info' : 'secondary' %>">
@@ -184,6 +190,16 @@
                     <button onclick="cancelProductOrder('<%= order._id %>', '<%= product.itemId %>')"
                       class="btn btn-sm btn-danger">Cancel</button>
                     <% } %>
+                
+                    <% if (product.status === 'returned') { %>
+                      <% if (!product.restocked) { %>
+                        <button onclick="addProductStock('<%= order._id %>', '<%= product.productId %>')"
+                          class="btn btn-sm btn-success">Add to Stock</button>
+                      <% } else { %>
+                        <span class="badge bg-success">Product Restocked</span>
+                      <% } %>
+                    <% } %>  
+                    
               </div>
             </div>
 
@@ -253,6 +269,11 @@
               <li class="list-group-item d-flex justify-content-between">
                 <span>Subtotal</span><span>₹<%= order.total %></span>
               </li>
+              <% if (order.couponApplied && order.couponDiscount > 0) { %>
+                <li class="list-group-item d-flex justify-content-between text-success">
+                  <span>Coupon Discount</span><span>- ₹<%= order.couponDiscount %></span>
+                </li>
+              <% } %>
               <li class="list-group-item d-flex justify-content-between">
                 <span>Shipping</span><span>₹<%= order.shipping %></span>
               </li>
@@ -600,4 +621,46 @@ async function updateReturnStatus(orderId, productId) {
         }
     }
 }
+
+async function addProductStock(orderId, productId) {
+  const result = await Swal.fire({
+    title: 'Add to Stock',
+    text: 'Are you sure you want to add this returned product back to stock?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, add it',
+    cancelButtonText: 'Cancel'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const response = await fetch('/admin/orders/add-to-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, productId })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Product successfully added back to stock!',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        location.reload();
+      } else {
+        throw new Error(data.message || 'Failed to update stock');
+      }
+    } catch (err) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'An unexpected error occurred'
+      });
+    }
+  }
+}
+
   </script>

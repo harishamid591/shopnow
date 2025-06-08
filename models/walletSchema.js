@@ -36,7 +36,7 @@ const walletSchema = new Schema({
             },
             transactionPurpose: {
                 type: String,
-                enum: ['refund', 'add', 'withdraw','purchase'],
+                enum: ['refund', 'add', 'withdraw','purchase','return'],
                 required: true
             },
             description: {

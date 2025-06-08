@@ -145,6 +145,9 @@
     <div class="totals">
       <p><span class="highlight">Total Order Price:</span> ₹<%= order.totalOrderPrice.toFixed(2) %></p>
       <p><span class="highlight">Delivery Charge:</span> ₹<%= order.deliveryCharge.toFixed(2) %></p>
+      <% if (order.couponApplied && order.discount) { %>
+        <p class="text-success"><span class="highlight">Coupon Discount:</span> - ₹<%= order.discount.toFixed(2) %></p>
+      <% } %>
       <p><span class="highlight">Final Amount:</span> ₹<%= order.finalAmount.toFixed(2) %></p>
     </div>
 

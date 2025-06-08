@@ -12,7 +12,14 @@ const getCartPage = async (req, res) => {
     const userData = await userModel.findById(userId);
 
     // Get the cart for the logged-in user and populate product details
-    const cart = await cartModel.findOne({ userId }).populate('cartItems.productId');
+    const cart = await cartModel.findOne({ userId })
+    .populate({
+      path: 'cartItems.productId',
+      populate: {
+        path: 'category', // populate category also
+      },
+    });
+
 
     if (!cart || cart.cartItems.length === 0) {
       // If no cart or empty cart
@@ -30,28 +37,33 @@ const getCartPage = async (req, res) => {
 
 
     const cartItems = cart.cartItems
-      .filter(item => item.productId) // skip if product was deleted
-      .map(item => {
-        const product = item.productId;
-        const price = product.price;
-        const discount = product.discount || 0;
-        const quantity = item.quantity;
-        
-        const discountedPrice = price - (price * discount) / 100;
-        const totalPrice = discountedPrice * quantity;
+    .filter(item => item.productId) // skip if product was deleted
+    .map(item => {
+      const product = item.productId;
+      const price = product.price;
+      const productDiscount = product.discount || 0;
+      const categoryDiscount = product.category?.categoryOffer || 0;
 
-        return {
-          _id: product._id,
-          image: product.productImage[0],
-          name: product.productName,
-          quantity,
-          price,
-          discount,
-          discountedPrice,
-          totalPrice,
-          stock: product.stock
-        };
-      });
+      // 🟡 Take maximum of categoryOffer and product.discount
+      const effectiveDiscount = Math.max(productDiscount, categoryDiscount);
+
+      const quantity = item.quantity;
+      
+      const discountedPrice = price - (price * effectiveDiscount) / 100;
+      const totalPrice = discountedPrice * quantity;
+
+      return {
+        _id: product._id,
+        image: product.productImage[0],
+        name: product.productName,
+        quantity,
+        price,
+        discount: effectiveDiscount, // Send the effective discount to frontend
+        discountedPrice,
+        totalPrice,
+        stock: product.stock
+      };
+    });
 
     // Calculate totals
     const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);

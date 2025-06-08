@@ -1,6 +1,8 @@
 const userModel = require("../../models/userSchema");
 const categoryModel = require("../../models/categorySchema");
 const productModel = require("../../models/productSchema");
+const wishlistModel = require("../../models/wishlistSchema");
+const couponModel = require("../../models/couponSchema");
 const bcrypt = require('bcrypt')
 const env = require('dotenv').config();
 const nodemailer = require('nodemailer')
@@ -14,40 +16,54 @@ const pageNotFound = async (req, res) => {
     }
 }
 
-const loadHome = async (req, res) => {
-    try {
-
-        const userid = req.session.user
-
-        const categories = await categoryModel.find({ isListed: true });
-
-        const products = await productModel.find({ 
-            isBlocked: false,
-            category:{$in: categories.map(category => category._id)}
-        });
-
-        products.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt))
-
-        if (userid) {
-            const userData = await userModel.findOne({ _id: userid })
-
-            return res.render('home', {
-                user: userData,
-                categories: categories,
-                products: products
-            })
-        } else {
-            return res.render('home', {
-                categories,
-                products
-            })
-        }
-
-    } catch (error) {
-        console.log('home page not found', error)
-        res.status(500).send('server error')
-    }
-}
+// const loadHome = async (req, res) => {
+//     try {
+//       const userId = req.session.user;
+  
+//       const categories = await categoryModel.find({ isListed: true });
+  
+//       const products = await productModel.find({
+//         isBlocked: false,
+//         category: { $in: categories.map(category => category._id) }
+//       });
+  
+//       products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  
+//       // Add inWishlist flag to each product
+//       if (userId) {
+//         const wishlist = await wishlistModel.findOne({ userId });
+  
+//         const wishlistProductIds = wishlist ? wishlist.product.map(id => id.toString()) : [];
+  
+//         // Add flag to each product
+//         products.forEach(product => {
+//           product.inWishlist = wishlistProductIds.includes(product._id.toString());
+//         });
+//       } else {
+//         // Mark all as not in wishlist if user not logged in
+//         products.forEach(product => {
+//           product.inWishlist = false;
+//         });
+//       }
+  
+//       const renderData = {
+//         categories,
+//         products,
+//       };
+  
+//       if (userId) {
+//         const userData = await userModel.findById(userId);
+//         renderData.user = userData;
+//       }
+  
+//       return res.render("home", renderData);
+  
+//     } catch (error) {
+//       console.log("Home page error:", error);
+//       return res.status(500).send("Server error");
+//     }
+//   };
+  
 
 const loadLogin = (req, res) => {
     try {
@@ -57,6 +73,59 @@ const loadLogin = (req, res) => {
         res.status(500).send('server error')
     }
 }
+
+const loadHome = async (req, res) => {
+    try {
+      const userId = req.session.user;
+  
+      // Get all listed categories
+      const categories = await categoryModel.find({ isListed: true });
+  
+      // Get products under listed categories
+      const products = await productModel.find({
+        isBlocked: false,
+        category: { $in: categories.map(category => category._id) }
+      }).populate("category");
+  
+      // Sort by newest
+      products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  
+      // Add wishlist status and effective discount
+      const wishlistProductIds = [];
+      if (userId) {
+        const wishlist = await wishlistModel.findOne({ userId });
+        if (wishlist) {
+          wishlistProductIds.push(...wishlist.product.map(id => id.toString()));
+        }
+      }
+  
+      products.forEach(product => {
+        // Mark if in wishlist
+        product.inWishlist = wishlistProductIds.includes(product._id.toString());
+  
+        // Compare category offer with product discount
+        const productDiscount = product.discount || 0;
+        const categoryOffer = product.category?.categoryOffer || 0;
+        product.effectiveDiscount = Math.max(productDiscount, categoryOffer);
+      });
+  
+      const renderData = {
+        categories,
+        products,
+      };
+  
+      if (userId) {
+        renderData.user = await userModel.findById(userId);
+      }
+  
+      return res.render("home", renderData);
+  
+    } catch (error) {
+      console.log("Home page error:", error);
+      return res.status(500).send("Server error");
+    }
+  };
+  
 
 const loadSignup = (req, res) => {
     try {
@@ -108,10 +177,14 @@ async function sendVerificationEmail(email, otp) {
     }
 }
 
+const generateReferralCode = () => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase(); // e.g., "K8FH29"
+  };
+
 const userSignUp = async (req, res) => {
     try {
 
-        const { name, email, phone, password, confirmPassword } = req.body;
+        const { name, email, phone, password, confirmPassword, referralCode } = req.body;
 
         if (!name || !email || !phone || !password || !confirmPassword) {
             return res.render('signup', { msg: `please Enter all fields` })
@@ -136,7 +209,7 @@ const userSignUp = async (req, res) => {
         }
 
         req.session.userOtp = otp;
-        req.session.userData = { name, email, phone, password };
+        req.session.userData = { name, email, phone, password, referredBy:referralCode };
 
         res.render('verify-otp');
 
@@ -157,16 +230,36 @@ const verifyOtp = async (req, res) => {
 
             const hashedPassword = await bcrypt.hash(user.password, 10)
 
+            let referrer = null;
+            if (user.referredBy) {
+              referrer = await userModel.findOne({ referralCode: user.referredBy });
+            }
+
             const userData = {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
-                password: hashedPassword
+                password: hashedPassword,
+                referralCode: generateReferralCode(),
+                referredBy: user.referredBy && referrer ? user.referredBy : null
             }
 
             const newUser = new userModel(userData)
 
             await newUser.save();
+
+            if (referrer) {
+                const coupon = new couponModel({
+                    name: "REF" + Math.random().toString(36).substring(2, 8).toUpperCase(),
+                    offerPrice: 25, // ₹100 or % discount
+                    userId: referrer._id,
+                    expireOn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+                    isReferralCoupon: true
+                });
+          
+                await coupon.save();
+              }
+
 
             req.session.user = newUser._id;
 

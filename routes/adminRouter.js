@@ -5,6 +5,8 @@ const customerController = require('../controllers/admin/customerController')
 const categoryController = require('../controllers/admin/categoryController')
 const productController = require('../controllers/admin/productController')
 const orderController = require('../controllers/admin/orderController')
+const couponController = require('../controllers/admin/couponController')
+const salesController = require('../controllers/admin/salesController')
 const upload = require('../config/multer')
 
 
@@ -53,6 +55,21 @@ router.post('/orders/updateOrderStatus',adminAuth,orderController.updateOrderSta
 router.post('/orders/cancelOrder',adminAuth,orderController.cancelOrder)
 router.post('/orders/handle-return',adminAuth,orderController.handleReturnRequest)
 router.post('/orders/update-return-status',adminAuth,orderController.updateReturnStatus)
+router.post('/orders/add-to-stock',adminAuth,orderController.addToStock)
+
+
+
+//Coupons
+router.get('/coupon',adminAuth,couponController.getCoupons)
+router.post('/createCoupon',adminAuth,couponController.createCoupon)
+router.post('/edit-coupon',adminAuth,couponController.editCoupon)
+router.post('/delete-coupon/:id',adminAuth,couponController.deleteCoupon)
+
+router.get('/sales',adminAuth,salesController.loadSalesPage)
+router.get('/sales/report', adminAuth, salesController.loadSalesPage);
+
+
+router.get('/offers',adminAuth,salesController.loadOfferManagement)
 
 
 
