@@ -18,6 +18,7 @@ router.get('/pageerror',adminController.pageerror);
 router.get('/login',adminController.loadLogin);
 router.post('/login',adminController.adminLogin);
 router.get('/dashboard',adminAuth,adminController.loadDashboard)
+router.get('/ledger',adminAuth,adminController.ledgerBook)
 router.get('/logout',adminController.logout);
 
 //Customer Management
@@ -45,7 +46,6 @@ router.post('/product-isBlocked/:id',adminAuth,productController.isBlockedProduc
 
 //Order Management
 router.get('/orders',adminAuth,orderController.getOrders)
-router.get('/viewOrders/:id',adminAuth,orderController.viewOrders)
 router.post('/orders/cancelProduct',adminAuth,orderController.cancelProductOrder)
 router.post('/orders/update-status',adminAuth,orderController.updateProductOrderStatus)
 

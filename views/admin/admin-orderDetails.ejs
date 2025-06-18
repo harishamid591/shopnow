@@ -78,6 +78,11 @@
         <h6>Placed on: <span class="text-muted">
             <%= new Date(order.createdOn).toLocaleString() %>
           </span></h6>
+          <% if (order.status === 'delivered' && order.deliveredAt) { %>
+            <div class="order-status">
+              <p><strong>Order Delivered On:</strong> <%= order.deliveredAt.toDateString() %></p>
+            </div>
+          <% } %>
           <h6>Payment Method: <span class="text-muted">
             <%= order.paymentMethod %>
           </span></h6> 
@@ -90,10 +95,16 @@
             <%= order.status %>
           </span>
         </h6>
+        <% if (order.status === 'delivered' && order.deliveredOn) { %>
+          <div class="order-status">
+            <p><strong>Order Delivered On:</strong> <%= order.deliveredOn.toDateString() %></p>
+          </div>
+        <% } %>
+        
       </div>
 
       <div class="d-flex gap-2 flex-wrap">
-        <% if (!['cancelled', 'delivered' ].includes(order.status)) { %>
+        <% if (!['cancelled', 'delivered','return_requested' ].includes(order.status)) { %>
           <button onclick="updateOrderStatus('<%= order._id %>')" class="btn btn-sm btn-primary">
             Update Status
           </button>
@@ -218,6 +229,14 @@
                     <%= product.status %>
                   </span>
                 </p>
+
+                <% if (product.status === 'cancelled' && product.cancelledAt) { %>
+                  <p>Cancelled On: <%= product.cancelledAt.toDateString() %></p>
+                <% } else if (product.status === 'returned' && product.returnedOn) { %>
+                  <p><strong>Returned On:</strong> <%= product.returnedOn.toDateString() %></p>
+                <% } else if (product.status === 'delivered' && product.deliveredOn) { %>
+                  <p><strong>Delivered On:</strong> <%= product.deliveredOn.toDateString() %></p>
+                <% } %>
               </div>
             </div>
 
@@ -261,27 +280,47 @@
         </div>
 
         <!-- Order Summary -->
+
+
         <div class="mb-4">
           <h5>Order Summary</h5>
-          <% const totalAmount=order.products.reduce((sum, p)=> sum + (p.price * p.quantity), 0);
-            %>
-            <ul class="list-group">
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Subtotal</span><span>₹<%= order.total %></span>
+        
+          <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Subtotal</span><span>₹<%= order.total.toFixed(2) %></span>
+            </li>
+        
+            <% if (order.couponApplied && order.couponDiscount > 0) { %>
+              <li class="list-group-item d-flex justify-content-between text-success">
+                <span>Coupon Discount</span><span>- ₹<%= order.couponDiscount.toFixed(2) %></span>
               </li>
-              <% if (order.couponApplied && order.couponDiscount > 0) { %>
-                <li class="list-group-item d-flex justify-content-between text-success">
-                  <span>Coupon Discount</span><span>- ₹<%= order.couponDiscount %></span>
-                </li>
+            <% } %>
+        
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Shipping</span><span>₹<%= order.shipping.toFixed(2) %></span>
+            </li>
+        
+            <% if (order.returnedAmount && order.returnedAmount > 0) { %>
+              <li class="list-group-item d-flex justify-content-between text-danger">
+                <span>Returned Product Refund</span><span>- ₹<%= order.returnedAmount.toFixed(2) %></span>
+              </li>
+            <% } %>
+        
+            <li class="list-group-item d-flex justify-content-between fw-bold">
+              <% if (order.returnedAmount && order.returnedAmount > 0) { %>
+                <span>Total Paid After Returns</span>
+                <span>₹<%= order.finalAmountAfterReturn.toFixed(2) %></span>
+              <% } else { %>
+                <span>Total</span>
+                <span>₹<%= order.finalAmount.toFixed(2) %></span>
               <% } %>
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Shipping</span><span>₹<%= order.shipping %></span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between fw-bold">
-                <span>Total</span><span>₹<%= order.finalAmount %></span>
-              </li>
-            </ul>
+            </li>
+          </ul>
         </div>
+        
+
+
+        
   </div>
 
   <!-- Rejection Modal -->

@@ -2,37 +2,6 @@ const wishlistModel = require('../../models/wishlistSchema');
 const productModel = require('../../models/productSchema');
 const userModel = require('../../models/userSchema');
 
-// const getWishlist = async(req,res)=>{
-//     try {
-//         const user = { name: "Haris" }; // Replace with actual user data from session
-//         const currentPage = "wishlist";
-      
-//         const wishlist = [
-//           {
-//             _id: "prod1",
-//             name: "Noise ColorFit Icon 2 Smartwatch",
-//             price: 1799,
-//             image: "/images/products/watch1.jpg"
-//           },
-//           {
-//             _id: "prod2",
-//             name: "boAt Rockerz 450 Bluetooth Headphones",
-//             price: 1499,
-//             image: "/images/products/headphones1.jpg"
-//           },
-//           {
-//             _id: "prod3",
-//             name: "Samsung Galaxy M14 5G (6GB RAM, 128GB)",
-//             price: 12999,
-//             image: "/images/products/phone1.jpg"
-//           }
-//         ];
-      
-//         res.render("wishlist", { user, wishlist, currentPage });
-//     } catch (error) {
-        
-//     }
-// }
 
 const getWishlist = async (req, res) => {
   try {
@@ -45,18 +14,31 @@ const getWishlist = async (req, res) => {
     const user = await userModel.findById(userId); // e.g., { name: "Haris", email: "..." }
     const currentPage = "wishlist";
 
-    // Find the wishlist and populate products
-    const wishlistDoc = await wishlistModel.findOne({ userId }).populate('product');
+    // Find the wishlist and populate products + categories
+    const wishlistDoc = await wishlistModel.findOne({ userId }).populate({
+      path: 'product',
+      populate: {
+        path: 'category' // To access categoryOffer
+      }
+    });
 
     const wishlist = wishlistDoc
-      ? wishlistDoc.product.map(product => ({
-          _id: product._id,
-          name: product.productName,
-          price: product.price,
-          stock: product.stock,
-          discount:product.discount,
-          image: product.productImage[0] || "/images/default.jpg" // Use first image or fallback
-        }))
+      ? wishlistDoc.product.map(product => {
+          // Calculate effective discount
+          const productDiscount = product.discount || 0;
+          const categoryOffer = product.category?.categoryOffer || 0;
+          const effectiveDiscount = Math.max(productDiscount, categoryOffer);
+
+          return {
+            _id: product._id,
+            name: product.productName,
+            price: product.price,
+            stock: product.stock,
+            discount: product.discount,
+            effectiveDiscount: effectiveDiscount, // Add this field
+            image: product.productImage[0] || "/images/default.jpg"
+          };
+        })
       : [];
 
     res.render("wishlist", { user, wishlist, currentPage });

@@ -3,8 +3,6 @@ const userModel = require('../../models/userSchema');
 const addressModel = require('../../models/addressSchema');
 
 
-
-
 const loadAddressPage = async(req,res)=>{
     try {
         

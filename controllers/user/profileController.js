@@ -5,7 +5,6 @@ const bcrypt = require('bcrypt')
 
 
 
-
 function generateOtp() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -38,7 +37,6 @@ async function sendVerificationEmail(email, otp) {
         return false
     }
 }
-
 
 const userProfile = async (req, res) => {
 

@@ -38,7 +38,6 @@
       Shop<span class="text-success">now</span>
       </div></a>
 
-      <!-- Search and Sort Form -->
       <form action="/allProducts" method="GET" class="d-flex flex-grow-1 justify-content-center align-items-center gap-2">
         <div class="position-relative flex-grow-1" style="max-width: 500px;">
           <!-- Search Input -->
@@ -56,6 +55,20 @@
             <option value="name_asc">A to Z</option>
             <option value="name_desc">Z to A</option>
           </select>
+
+            <!-- Hidden filters -->
+            <% if (typeof selectedCategory !== 'undefined' && selectedCategory) { %>
+              <input type="hidden" name="category" value="<%= selectedCategory %>">
+            <% } %>
+            
+            <% if (typeof selectedBrand !== 'undefined' && selectedBrand) { %>
+              <input type="hidden" name="brand" value="<%= selectedBrand %>">
+            <% } %>
+            
+            <% if (typeof priceGt !== 'undefined' && typeof priceLt !== 'undefined' && priceGt && priceLt) { %>
+              <input type="hidden" name="gt" value="<%= priceGt %>">
+              <input type="hidden" name="lt" value="<%= priceLt %>">
+            <% } %>
         </div>
 
         <button type="submit" class="btn" style="background-color: #4caf50; color: white;">Apply</button>

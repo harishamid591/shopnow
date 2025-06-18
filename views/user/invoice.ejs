@@ -128,6 +128,7 @@
           <th>Qty</th>
           <th>Price (₹)</th>
           <th>Total (₹)</th>
+          <th>Status</th> 
         </tr>
       </thead>
       <tbody>
@@ -137,6 +138,7 @@
             <td><%= item.quantity %></td>
             <td><%= item.price.toFixed(2) %></td>
             <td><%= (item.price * item.quantity).toFixed(2) %></td>
+            <td style="text-transform: capitalize;"><%= item.status %></td>
           </tr>
         <% }) %>
       </tbody>
@@ -148,7 +150,7 @@
       <% if (order.couponApplied && order.discount) { %>
         <p class="text-success"><span class="highlight">Coupon Discount:</span> - ₹<%= order.discount.toFixed(2) %></p>
       <% } %>
-      <p><span class="highlight">Final Amount:</span> ₹<%= order.finalAmount.toFixed(2) %></p>
+      <p><span class="highlight">Final Amount:</span> ₹<%= order.adjustedFinalAmount.toFixed(2) %></p>
     </div>
 
     <div class="address">

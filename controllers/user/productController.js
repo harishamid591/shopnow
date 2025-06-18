@@ -65,104 +65,6 @@ const productDetails = async (req, res) => {
     }
 }
 
-
-
-const allProducts = async (req, res) => {
-    try {
-      const userId = req.session.user;
-  
-      const page = parseInt(req.query.page) || 1;
-      const limit = 8;
-      const skip = (page - 1) * limit;
-  
-      let query = {
-        isBlocked: false,
-      };
-  
-      if (req.query.search) {
-        query.productName = { $regex: req.query.search, $options: "i" };
-      }
-  
-      const categories = await categoryModel.find({ isListed: true });
-      query.category = { $in: categories.map((category) => category._id) };
-  
-      let sort = {};
-      switch (req.query.sort) {
-        case "price_asc":
-          sort = { price: 1 };
-          break;
-        case "price_desc":
-          sort = { price: -1 };
-          break;
-        case "name_asc":
-          sort = { productName: 1 };
-          break;
-        case "name_desc":
-          sort = { productName: -1 };
-          break;
-        default:
-          sort = { createdAt: -1 };
-      }
-  
-      const products = await productModel
-        .find(query)
-        .populate("category")
-        .sort(sort)
-        .skip(skip)
-        .limit(limit);
-
-      const totalProducts = await productModel.countDocuments(query);
-      const totalPages = Math.ceil(totalProducts / limit);
-  
-      // Handle wishlist flag and effective discount
-      if (userId) {
-        const wishlist = await wishlistModel.findOne({ userId });
-        const wishlistProductIds = wishlist ? wishlist.product.map(id => id.toString()) : [];
-
-        products.forEach(product => {
-          product.inWishlist = wishlistProductIds.includes(product._id.toString());
-        });
-      } else {
-        products.forEach(product => {
-          product.inWishlist = false;
-        });
-      }
-
-    
-      // Apply effectiveDiscount for each product
-      products.forEach(product => {
-        const productDiscount = product.discount || 0;
-        const categoryOffer = product.category?.categoryOffer || 0;
-        product.effectiveDiscount = Math.max(productDiscount, categoryOffer);
-      });
-
-      
-
-      const renderData = {
-        products,
-        currentPage: page,
-        totalPages: totalPages,
-        categories,
-        brands: ["Rajgiraattad", "Pampers", "Amul", "Nestle", "Parle", "Britannia"],
-        selectedCategory: null,
-        selectedBrand: null,
-        selectCategoryName: null,
-      };
-  
-      if (userId) {
-        const userData = await userModel.findById(userId);
-        renderData.user = userData;
-      }
-  
-      return res.render("allProducts", renderData);
-  
-    } catch (error) {
-      console.error("Error for show all product", error);
-      res.redirect("/pageNotFound");
-    }
-  };
-
-
 // const allProducts = async (req, res) => {
 //     try {
 //       const userId = req.session.user;
@@ -200,24 +102,40 @@ const allProducts = async (req, res) => {
 //           sort = { createdAt: -1 };
 //       }
   
-//       const products = await productModel.find(query).sort(sort).skip(skip).limit(limit);
+//       const products = await productModel
+//         .find(query)
+//         .populate("category")
+//         .sort(sort)
+//         .skip(skip)
+//         .limit(limit);
+
 //       const totalProducts = await productModel.countDocuments(query);
 //       const totalPages = Math.ceil(totalProducts / limit);
   
-//       // Handle wishlist flag
+//       // Handle wishlist flag and effective discount
 //       if (userId) {
 //         const wishlist = await wishlistModel.findOne({ userId });
-//         const wishlistProductIds = wishlist ? wishlist.product.map((id) => id.toString()) : [];
-  
-//         products.forEach((product) => {
+//         const wishlistProductIds = wishlist ? wishlist.product.map(id => id.toString()) : [];
+
+//         products.forEach(product => {
 //           product.inWishlist = wishlistProductIds.includes(product._id.toString());
 //         });
 //       } else {
-//         products.forEach((product) => {
+//         products.forEach(product => {
 //           product.inWishlist = false;
 //         });
 //       }
-  
+
+    
+//       // Apply effectiveDiscount for each product
+//       products.forEach(product => {
+//         const productDiscount = product.discount || 0;
+//         const categoryOffer = product.category?.categoryOffer || 0;
+//         product.effectiveDiscount = Math.max(productDiscount, categoryOffer);
+//       });
+
+      
+
 //       const renderData = {
 //         products,
 //         currentPage: page,
@@ -241,8 +159,9 @@ const allProducts = async (req, res) => {
 //       res.redirect("/pageNotFound");
 //     }
 //   };
-  
 
+
+  
 const filterProduct = async (req, res) => {
     try {
 
@@ -436,6 +355,132 @@ const filterByPrice = async(req,res)=>{
         res.redirect('/pageNotFound');
     }
 }
+
+
+const allProducts = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 8;
+    const skip = (page - 1) * limit;
+
+    const search = req.query.search || '';
+    const category = req.query.category || '';
+    const brand = req.query.brand || '';
+    const priceGt = req.query.gt || null;
+    const priceLt = req.query.lt || null;
+    const sortOption = req.query.sort || '';
+
+    const query = { isBlocked: false };
+
+    // Search
+    if (search) {
+      query.productName = { $regex: search, $options: 'i' };
+    }
+
+    // Category filter
+    if (category) {
+      query.category = category;
+    }
+
+    // Brand filter
+    if (brand) {
+      query.brand = brand;
+    }
+
+    // Price range filter
+    if (priceGt && priceLt) {
+      query.price = {
+        $gt: parseFloat(priceGt),
+        $lt: parseFloat(priceLt)
+      };
+    }
+
+    // Fetch only listed categories
+    const categories = await categoryModel.find({ isListed: true });
+
+    // Sorting logic
+    let sort = {};
+    switch (sortOption) {
+      case 'price_asc':
+        sort = { price: 1 };
+        break;
+      case 'price_desc':
+        sort = { price: -1 };
+        break;
+      case 'name_asc':
+        sort = { productName: 1 };
+        break;
+      case 'name_desc':
+        sort = { productName: -1 };
+        break;
+      default:
+        sort = { createdAt: -1 };
+    }
+
+    // Fetch products
+    const products = await productModel.find(query)
+      .populate("category")
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const totalProducts = await productModel.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    // Handle wishlist flag
+    if (userId) {
+      const wishlist = await wishlistModel.findOne({ userId });
+      const wishlistProductIds = wishlist ? wishlist.product.map(id => id.toString()) : [];
+
+      products.forEach(product => {
+        product.inWishlist = wishlistProductIds.includes(product._id.toString());
+      });
+    } else {
+      products.forEach(product => {
+        product.inWishlist = false;
+      });
+    }
+
+    // Add effectiveDiscount for each product
+    for (let product of products) {
+      const productDiscount = product.discount || 0;
+      const categoryOffer = product.category?.categoryOffer || 0;
+      product.effectiveDiscount = Math.max(productDiscount, categoryOffer);
+    }
+
+    // Find user data if logged in
+    const userData = userId ? await userModel.findById(userId) : null;
+
+    // Get selected category name for display
+    const selectedCategoryDoc = category
+      ? await categoryModel.findById(category)
+      : null;
+
+    const renderData = {
+      user: userData,
+      products,
+      categories,
+      brands: ['Rajgiraattad', 'Pampers', 'Amul', 'Nestle', 'Parle', 'Britannia'],
+      currentPage: page,
+      totalPages,
+      selectedCategory: category || null,
+      selectedBrand: brand || null,
+      selectCategoryName: selectedCategoryDoc ? selectedCategoryDoc.categoryName : null,
+      sort: sortOption,
+      search,
+      priceGt,
+      priceLt
+    };
+
+    res.render("allProducts", renderData);
+  } catch (error) {
+    console.error("Error showing all products:", error);
+    res.redirect("/pageNotFound");
+  }
+};
+
 
 module.exports = {
     productDetails,

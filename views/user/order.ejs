@@ -326,6 +326,15 @@
                 <span class="badge <%= statusClass %>">
                   <%= status.charAt(0).toUpperCase() + status.slice(1) %>
                 </span>
+              
+                <!-- Show corresponding status date -->
+                <!-- <% if (status === 'returned' && item.returnedOn) { %>
+                  <div class="small text-muted">Returned On: <%= new Date(item.returnedOn).toLocaleDateString() %></div>
+                <% } else if (status === 'delivered' && item.deliveredOn) { %>
+                  <div class="small text-muted">Delivered On: <%= new Date(item.deliveredOn).toLocaleDateString() %></div>
+                <% } else if (status === 'cancelled' && item.cancelledAt) { %>
+                  <div class="small text-muted">Cancelled On: <%= new Date(item.cancelledAt).toLocaleDateString() %></div>
+                <% } %> -->
               </div>
                 <div>Quantity: <%= item.quantity %></div>
                 <div>Price: ₹<%= item.price.toFixed(2) %></div>

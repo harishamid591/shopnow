@@ -108,7 +108,7 @@
                     <ul class="ps-1">
                         <% categories.forEach(category=> { %>
                             <li class="filter-item">
-                                <a href="/filter?category=<%= category._id %>"
+                                <a href="/allProducts?category=<%= category._id %>&sort=<%= sort %>&search=<%= search || '' %>"
                                     class="text-light text-decoration-none d-block <%= selectedCategory == category._id ? 'active' : '' %>">
                                     <%= category.categoryName %>
                                 </a>
@@ -137,13 +137,13 @@
                     <div class="filter-title">Filter by Price</div>
                     <form id="price-filter-form">
                         <div class="price-options d-flex flex-column gap-2">
-                            <a href="/filterPrice?gt=0&lt=500" class="price-button btn btn-outline-light btn-sm">Under
+                            <a href="/allProducts?gt=0&lt=500&sort=<%= sort %>&search=<%= search || '' %>" class="price-button btn btn-outline-light btn-sm">Under
                                 ₹500</a>
-                            <a href="/filterPrice?gt=500&lt=1000" class="price-button btn btn-outline-light btn-sm">₹500
+                            <a href="/allProducts?gt=500&lt=1000&sort=<%= sort %>&search=<%= search || '' %>" class="price-button btn btn-outline-light btn-sm">₹500
                                 - ₹1000</a>
-                            <a href="/filterPrice?gt=1000&lt=1500"
+                            <a href="/allProducts?gt=1000&lt=1500&sort=<%= sort %>&search=<%= search || '' %>"
                                 class="price-button btn btn-outline-light btn-sm">₹1000 - ₹1500</a>
-                            <a href="/filterPrice?gt=1500&lt=100000"
+                            <a href="/allProducts?gt=1500&lt=100000&sort=<%= sort %>&search=<%= search || '' %>"
                                 class="price-button btn btn-outline-light btn-sm">Above ₹1500</a>
                         </div>
                     </form>

@@ -142,6 +142,7 @@
                 <th>Amount</th>
                 <th>Discount</th>
                 <th>Coupon</th>
+                <th>Payment Method</th>
               </tr>
             </thead>
             <tbody>
@@ -152,6 +153,7 @@
                 <td>₹<%= sale.amount.toLocaleString() %></td>
                 <td class="text-danger">₹<%= sale.lessPrice.toFixed(2) %></td>
                 <td class="text-muted">₹<%= sale.discount.toFixed(2) %></td>
+                <td><%= sale.paymentMethod %></td>
               </tr>
               <% }) %>
             </tbody>

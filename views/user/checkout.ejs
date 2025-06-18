@@ -887,6 +887,28 @@ async function processRazorpayOrder(orderData) {
         };
 
         const rzp = new Razorpay(options);
+
+        rzp.on('payment.failed', async function (response) {
+            const result = await Swal.fire({
+                icon: 'error',
+                title: 'Payment Failed',
+                text: 'Your payment was not successful. Would you like to try again?',
+                showCancelButton: true,
+                confirmButtonText: 'Retry',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#d33'
+            });
+
+            if (result.isConfirmed) {
+                // Retry payment
+                processRazorpayOrder(orderData);
+            } else {
+                // User cancelled retry
+                isProcessingOrder = false;
+            }
+        });
+
         rzp.open();
     } catch (error) {
         throw error;
@@ -961,37 +983,6 @@ document.getElementById('confirmWalletPayment').addEventListener('click', async 
     }
 });
 
-
-// async function processWalletOrder(orderData) {
-//     try {
-//         const response = await fetch('/place-wallet-order', {
-//             method: 'POST',
-//             headers: { 'Content-Type': 'application/json' },
-//             body: JSON.stringify(orderData)
-//         });
-
-//         const result = await response.json();
-
-//         if (!response.ok) {
-//             throw new Error(result.message || 'Wallet payment failed');
-//         }
-
-//         if (result.success) {
-//             await Swal.fire({
-//                 title: 'Order Placed Successfully!',
-//                 text: `Order ID: ${result.orderId}. Amount debited from wallet.`,
-//                 icon: 'success',
-//                 confirmButtonText: 'View Orders'
-//             });
-            
-//             window.location.href = '/orders';
-//         } else {
-//             throw new Error(result.message || 'Failed to place order');
-//         }
-//     } catch (error) {
-//         throw error;
-//     }
-// }
 
     // Verify Razorpay payment
 async function verifyPayment(paymentResponse, orderData) {

@@ -68,6 +68,7 @@
                     <th>Name</th>
                     <th>Price (₹)</th>
                     <th>Category</th>
+                    <th>Quantity & Unit</th>
                     <th>Stock</th>
                     <th>Discount (%)</th>
                     <th>Status</th>
@@ -81,6 +82,7 @@
                         <td><%= product.productName %></td>
                         <td><%= product.price %></td>
                         <td><%= product.category.categoryName %></td>
+                        <td><%= product.productQuantity %> <%= product.unit %></td> 
                         <td><%= product.stock %></td>
                         <td><%= product.discount %></td>
                         <td>
@@ -158,6 +160,26 @@
                         <label class="form-label">Discount (%)</label>
                         <input type="number" class="form-control" id="discount" name="discount">
                     </div>
+
+                    <div class="row">
+                        <div class="mb-3 col-md-6">
+                          <label class="form-label">Quantity</label>
+                          <input type="number" class="form-control" id="quantity" name="quantity" min="1" placeholder="e.g., 100">
+                        </div>
+                      
+                        <div class="mb-3 col-md-6">
+                          <label class="form-label">Unit</label>
+                          <select class="form-select" id="unit" name="unit">
+                            <option selected disabled value="">Select Unit</option>
+                            <option value="g">Gram (g)</option>
+                            <option value="kg">Kilogram (kg)</option>
+                            <option value="ml">Millilitre (ml)</option>
+                            <option value="litre">Litre</option>
+                            <option value="pcs">Pieces</option>
+                            <option value="pack">Packet</option>
+                          </select>
+                        </div>
+                      </div>
 
                     <div class="mb-3">
                         <label class="form-label">Category</label>
@@ -242,6 +264,8 @@
         document.getElementById('categoryId').value = product.category._id;
         document.getElementById('brand').value = product.brand || '';
         document.getElementById('description').value = product.description || '';
+        document.getElementById('quantity').value = product.productQuantity || '';
+        document.getElementById('unit').value = product.unit || '';
      
 
         // Reset images preview and array
@@ -475,6 +499,8 @@ function handleToggleSubmit(event) {
         formData.append('categoryId', document.getElementById('categoryId').value);
         formData.append('brand', document.getElementById('brand').value);
         formData.append('description', document.getElementById('description').value);
+        formData.append('quantity', document.getElementById('quantity').value);
+        formData.append('unit', document.getElementById('unit').value);
        
 
         // For images:

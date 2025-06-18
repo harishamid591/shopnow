@@ -60,6 +60,9 @@ const orderSchema = new Schema({
         deliveredOn:{
             type:Date
         },
+        returnedOn:{
+            type:Date
+        },
         restocked:{
             type:Boolean,
             default:false

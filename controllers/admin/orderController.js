@@ -63,62 +63,6 @@ const getOrders = async (req, res) => {
   }
 };
 
-
-const viewOrders = async (req, res) => {
-  try {
-    const orderId = req.params.id;
-    const productId = req.query.productId;
-
-    // Fetch the order with all products populated
-    const order = await orderModel.findOne({ _id: orderId });
-
-    if (!order) {
-      return res.status(404).send("Order not found");
-    }
-
-    const userData = await userModel.findById(order.userId);
-
-    // Find the matching product from orderedItems
-    const productItem = order.orderedItems.find(item => item._id.toString() === productId);
-
-    if (!productItem) {
-      return res.status(404).send("Product not found in this order");
-    }
-
-
-    // Prepare the formatted order data with only the selected product
-    const formattedOrder = {
-      _id: order._id,
-      status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
-      date: order.invoiceDate.toISOString().split('T')[0],
-      customerName: order.address.name,
-      address: `${order.address.streetAddress}, ${order.address.town}, ${order.address.city}, ${order.address.state}, ${order.address.country} - ${order.address.pincode}`,
-      phone: order.address.phone,
-      email: userData?.email || 'Not Provided',
-      subtotal: order.totalPrice,
-      shipping: order.deliveryCharge || 0,
-      amount: order.finalAmount,
-      product: {
-        name: productItem.productName || "Unknown Product",
-        quantity: productItem.quantity,
-        price: productItem?.price || 0,
-        image: productItem?.productImages?.[0] || "/images/default.jpg",
-        amount: (productItem.price * productItem.quantity).toFixed(2),
-        status: productItem.status.charAt(0).toUpperCase() + productItem.status.slice(1),
-        itemId: productItem._id,
-        requestStatus: productItem.requestStatus
-      }
-    };
-
-
-    res.render('admin-order-details', { order: formattedOrder });
-
-  } catch (error) {
-    console.error("Error fetching order details:", error);
-    res.status(500).send("Something went wrong while fetching order details.");
-  }
-};
-
 const cancelProductOrder = async (req, res) => {
   try {
     const { orderId, itemId } = req.body;
@@ -163,6 +107,13 @@ const cancelProductOrder = async (req, res) => {
     if (product) {
       product.stock += item.quantity;
       await product.save();
+    }
+
+    // Check if all products are cancelled
+    const allItemsCancelled = order.orderedItems.every(i => i.status === "cancelled");
+    if (allItemsCancelled) {
+      order.status = "cancelled"; // update order status
+      order.cancelledAt = new Date();
     }
 
     // Save updated order
@@ -241,63 +192,6 @@ const updateProductOrderStatus = async (req, res) => {
 }
 
 //admin orders
-// const viewOrderDetails = async (req, res) => {
-//   try {
-//     const orderId = req.params.id;
-
-//     const order = await orderModel.findOne({orderId})
-//       .populate('orderedItems.product')
-//       .lean();
-
-
-//     if (!order) {
-//       return res.status(404).send('Order not found');
-//     }
-
-//     const couponName = order.couponName
-
-//     const coupon = await couponModel.findOne({name:couponName});
-
-//     const userId = order.userId;
-
-//     userData = await userModel.findById(userId);
-
-//     // Format data for the view
-//     const formattedOrder = {
-//       _id: order.orderId,
-//       status: order.status,
-//       shipping: order.deliveryCharge,
-//       customerName: order.address?.name || 'Customer',
-//       address: `${order.address?.streetAddress || ''}, ${order.address?.town || ''}, ${order.address?.city || ''}, ${order.address?.state || ''}, ${order.address?.country || ''}, ${order.address?.pincode || ''}`,
-//       phone: order.address?.phone,
-//       email: userData.email || 'Not Provided',
-//       products: order.orderedItems.map(item => ({
-//         itemId: item._id,
-//         name: item.productName,
-//         quantity: item.quantity,
-//         price: item.price,
-//         image: item.productImages[0] || item.product?.productImage?.[0] || '/images/no-image.png',
-//         status: item.status,
-//         amount: item.totalProductPrice,
-//         returnReason: item.returnReason,
-//         returnDescription: item.returnDescription,
-//         returnImages:item.returnImages,
-//         requestStatus: item.requestStatus
-//       })),
-//       total: order.totalOrderPrice,
-//       finalAmount: order.finalAmount,
-//       paymentMethod: order.paymentMethod,
-//       couponApplied: order.couponApplied,
-//       createdOn: order.createdOn
-//     };
-
-//     res.render('admin-OrderDetails', { order: formattedOrder });
-
-//   } catch (error) {
-//     console.error('Error loading order details:', error);
-//     res.status(500).send('Internal Server Error');
-//   }
-// };
 
 const viewOrderDetails = async (req, res) => {
   try {
@@ -314,21 +208,46 @@ const viewOrderDetails = async (req, res) => {
     const couponName = order.couponName;
     let couponDiscount = 0;
 
-
-
     // Get coupon discount if applied
     if (order.couponApplied && couponName) {
       const coupon = await couponModel.findOne({ name: couponName });
-
 
       if (coupon) {
         couponDiscount = Math.round(order.totalOrderPrice * (coupon.offerPrice / 100));
       }
     }
 
-
     const userId = order.userId;
     const userData = await userModel.findById(userId);
+
+    // Compute returned amount:
+    const totalOrderAmountBeforeDiscount = order.orderedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    let returnedAmount = 0;
+
+    order.orderedItems.forEach(item => {
+      if (item.status === 'returned') {
+        const itemTotal = item.price * item.quantity;
+
+        // Proportional discount for this item:
+        let proportionalDiscount = 0;
+        if (order.couponApplied && order.discount > 0) {
+          const discountRatio = itemTotal / totalOrderAmountBeforeDiscount;
+          proportionalDiscount = order.discount * discountRatio;
+        }
+
+        // Final refund for this product:
+        const refundAmount = itemTotal - proportionalDiscount;
+
+        returnedAmount += refundAmount;
+      }
+    });
+
+    // Round returnedAmount to 2 decimals
+    returnedAmount = Math.round(returnedAmount * 100) / 100;
+
+    // Final amount after returns
+    const finalAmountAfterReturn = Math.max(order.finalAmount - returnedAmount, 0);
 
     const formattedOrder = {
       _id: order.orderId,
@@ -344,24 +263,28 @@ const viewOrderDetails = async (req, res) => {
         name: item.productName,
         quantity: item.quantity,
         price: item.price,
-        image: item.productImages[0] || item.product?.productImage?.[0] || '/images/no-image.png',
+        image: item.productImages?.[0] || item.product?.productImage?.[0] || '/images/no-image.png',
         status: item.status,
         amount: item.totalProductPrice,
         returnReason: item.returnReason,
         returnDescription: item.returnDescription,
         returnImages: item.returnImages,
         requestStatus: item.requestStatus,
-        restocked: item.restocked
+        restocked: item.restocked,
+        deliveredOn: item.deliveredOn,
+        returnedOn:item.returnedOn
       })),
       total: order.totalOrderPrice,
       couponDiscount, // add discount value
       finalAmount: order.finalAmount,
+      returnedAmount, // NEW: returned amount
+      finalAmountAfterReturn, // NEW: final amount after subtracting returnedAmount
       paymentMethod: order.paymentMethod,
       couponApplied: order.couponApplied,
       couponName: order.couponName,
-      createdOn: order.createdOn
+      createdOn: order.createdOn,
+      deliveredOn:order.deliveredOn
     };
-
 
     res.render('admin-OrderDetails', { order: formattedOrder });
 
@@ -476,51 +399,6 @@ const cancelOrder = async (req, res) => {
 };
 
 
-// const cancelOrder = async (req, res) => {
-//   try {
-//     const { orderId, reason } = req.body;
-
-//     const order = await orderModel.findOne({ orderId });
-
-//     if (!order) {
-//       return res.status(404).json({ success: false, message: 'Order not found' });
-//     }
-
-//     if (order.status === 'cancelled') {
-//       return res.status(400).json({ success: false, message: 'Order is already cancelled' });
-//     }
-
-//     // Update each product's stock and item status
-//     for (const item of order.orderedItems) {
-//       if (item.status !== 'cancelled') {
-//         item.status = 'cancelled';
-//         item.cancelReason = reason || 'Cancelled by admin';
-//         item.cancelledAt = new Date();
-//         item.updatedOn = new Date();
-
-//         // Increment product stock
-//         const product = await productModel.findById(item.product);
-//         if (product) {
-//           product.stock += item.quantity;
-//           await product.save();
-//         }
-//       }
-//     }
-
-//     // Update main order status
-//     order.status = 'cancelled';
-//     order.cancelReason = reason || 'Cancelled by admin';
-//     order.updatedOn = new Date();
-
-//     await order.save();
-
-//     res.json({ success: true, message: 'Order cancelled and stock updated successfully' });
-//   } catch (error) {
-//     console.error('Error cancelling order:', error);
-//     res.status(500).json({ success: false, message: 'Internal server error' });
-//   }
-// };
-
 const handleReturnRequest = async (req, res) => {
   try {
     const { orderId, productId, action, rejectionCategory, rejectionReason } = req.body;
@@ -614,8 +492,14 @@ const updateReturnStatus = async (req, res) => {
       });
     }
 
+    const currentTime = new Date();
+
     item.status = status;
-    item.updatedOn = new Date();
+    item.updatedOn = currentTime;
+
+    if (status === 'returned') {
+      item.returnedOn = currentTime;
+    }
 
     // Update overall order status if any item is still in return flow
     const stillReturning = order.orderedItems.some(
@@ -650,6 +534,7 @@ const updateReturnStatus = async (req, res) => {
     });
   }
 };
+
 
 const addToStock = async (req, res) => {
   try {
@@ -703,7 +588,6 @@ const addToStock = async (req, res) => {
 
 module.exports = {
   getOrders,
-  viewOrders,
   cancelProductOrder,
   updateProductOrderStatus,
   viewOrderDetails,

@@ -7,7 +7,6 @@ const path = require('path');
 const sharp = require('sharp')
 
 
-
 const getProductAddPage = async (req, res) => {
     try {
 
@@ -63,6 +62,8 @@ const addProducts = async (req, res) => {
                 discount: products.discount,
                 price: products.price,
                 stock: products.stock,
+                productQuantity: products.quantity,
+                unit:products.unit,
                 productImage: imageFilenames,
                 status: 'available'
             })
@@ -121,65 +122,6 @@ const displayProducts = async (req, res) => {
     }
 }
 
-// const editProduct = async (req, res) => {
-//     try {
-//         const productId = req.params.id;
-
-//         const { productName, price, stock, discount } = req.body;
-
-//         const existingProduct = await productModel.findOne({ _id:{$ne:productId } ,productName:productName});
-
-//         if (existingProduct) {
-//             return res
-//                 .status(400)
-//                 .json({ success: false, message: "Product with this name already exists. Please try another name." })
-//         }
-
-//         const product = await productModel.findOne({ _id: productId });
-//         if (
-//             product.productName == productName &&
-//             product.price == price &&
-//             product.stock == stock &&
-//             product.discount == discount
-//         ) {
-//             return res.json({ success: false, message: 'No changes detected. Please modify at least one field before saving.' });
-//         }
-
-//         const updatedProduct = await productModel.findByIdAndUpdate(
-//             productId,
-//             {
-//                 productName,
-//                 price,
-//                 stock,
-//                 discount
-//             },
-//             { new: true }
-//         );
-
-//         if (!updatedProduct) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "Product not found."
-//             });
-//         }
-
-//         return res.status(200).json({
-//             success: true,
-//             message: "Product updated successfully.",
-//             product: updatedProduct
-//         });
-
-
-//     } catch (error) {
-//         console.error("Error updating product:", error);
-//         return res.status(500).json({
-//             success: false,
-//             message: "An error occurred while updating the product."
-//         });
-//     }
-// }
-
-
 const editProduct = async (req, res) => {
     try {
         const productId = req.params.id;
@@ -190,6 +132,8 @@ const editProduct = async (req, res) => {
             stock,
             discount,
             brand,
+            quantity,
+            unit,
             description,
             categoryId,
             existingImages // This is a JSON string
@@ -249,6 +193,8 @@ const editProduct = async (req, res) => {
             product.stock == stock &&
             product.discount == discount &&
             product.brand == brand &&
+            product.productQuantity == quantity &&
+            product.unit == unit &&
             product.description == description &&
             product.category.toString() == categoryId &&
             JSON.stringify(product.productImage) == JSON.stringify(allImages)
@@ -268,6 +214,8 @@ const editProduct = async (req, res) => {
                 discount,
                 brand,
                 description,
+                productQuantity:quantity,
+                unit,
                 category:categoryId,
                 productImage: allImages
             },
@@ -295,7 +243,6 @@ const editProduct = async (req, res) => {
         });
     }
 };
-
 
 const deleteProduct = async (req, res) => {
     try {

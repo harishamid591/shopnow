@@ -93,12 +93,6 @@ const getCartPage = async (req, res) => {
   }
 };
 
-
-
-
-
-
-
 const addToCart = async (req, res) => {
   try {
 
@@ -189,7 +183,6 @@ const addToCart = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
-
 
 const changeQuantity = async (req, res) => {
   try {

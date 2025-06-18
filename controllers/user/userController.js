@@ -16,55 +16,6 @@ const pageNotFound = async (req, res) => {
     }
 }
 
-// const loadHome = async (req, res) => {
-//     try {
-//       const userId = req.session.user;
-  
-//       const categories = await categoryModel.find({ isListed: true });
-  
-//       const products = await productModel.find({
-//         isBlocked: false,
-//         category: { $in: categories.map(category => category._id) }
-//       });
-  
-//       products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  
-//       // Add inWishlist flag to each product
-//       if (userId) {
-//         const wishlist = await wishlistModel.findOne({ userId });
-  
-//         const wishlistProductIds = wishlist ? wishlist.product.map(id => id.toString()) : [];
-  
-//         // Add flag to each product
-//         products.forEach(product => {
-//           product.inWishlist = wishlistProductIds.includes(product._id.toString());
-//         });
-//       } else {
-//         // Mark all as not in wishlist if user not logged in
-//         products.forEach(product => {
-//           product.inWishlist = false;
-//         });
-//       }
-  
-//       const renderData = {
-//         categories,
-//         products,
-//       };
-  
-//       if (userId) {
-//         const userData = await userModel.findById(userId);
-//         renderData.user = userData;
-//       }
-  
-//       return res.render("home", renderData);
-  
-//     } catch (error) {
-//       console.log("Home page error:", error);
-//       return res.status(500).send("Server error");
-//     }
-//   };
-  
-
 const loadLogin = (req, res) => {
     try {
         res.render('login');
@@ -108,6 +59,7 @@ const loadHome = async (req, res) => {
         const categoryOffer = product.category?.categoryOffer || 0;
         product.effectiveDiscount = Math.max(productDiscount, categoryOffer);
       });
+
   
       const renderData = {
         categories,

@@ -182,37 +182,44 @@
                             <!-- Discount badge -->
                             <% if (product.stock===0) { %>
                                 <span class="badge bg-danger stock-badge">Out of Stock</span>
-                                <% } else if (product.discount && product.discount> 0) { %>
-                                    <span class="badge bg-success discount-badge">-<%= product.discount %>%</span>
+                                <% } else if (product.effectiveDiscount && product.effectiveDiscount> 0) { %>
+                                    <span class="badge bg-success discount-badge">-<%= product.effectiveDiscount %>%</span>
                                     <% } %>
 
-                                        <img src="<%= product.image %>" alt="<%= product.name %>">
+                                       <a href="/productDetails/<%= product._id %>"><img src="<%= product.image %>" alt="<%= product.name %>"></a> 
 
-                                        <div class="wishlist-details w-100">
-                                            <h6>
-                                                <%= product.name %>
-                                            </h6>
-                                            <p class="text-muted mb-1">₹<%= product.price %>
-                                            </p>
-
-                                            <!-- Quantity selector below price -->
-                                            <div class="input-group input-group-sm my-2" style="width: 100px;">
-                                                <button class="btn btn-outline-secondary" type="button"
-                                                    onclick="decreaseQty('qty<%= product._id %>')">−</button>
-                                                <input type="text" class="form-control text-center"
-                                                    id="qty<%= product._id %>" value="1" readonly>
-                                                <button class="btn btn-outline-secondary" type="button"
-                                                    onclick="increaseQty('qty<%= product._id %>', '<%= product.stock %>')">+</button>
-                                            </div>
+                                       <div class="wishlist-details w-100">
+                                        <h6>
+                                            <%= product.name %>
+                                        </h6>
+                                        
+                                        <!-- Final discounted price -->
+                                        <div class="text-start mb-2">
+                                          <span class="fw-bold text-success">
+                                            ₹<%= Math.round(product.price - (product.price * product.effectiveDiscount / 100)) %>
+                                          </span>
+                                          <% if (product.effectiveDiscount && product.effectiveDiscount > 0) { %>
+                                            <small class="text-muted text-decoration-line-through ms-2">
+                                              ₹<%= product.price %>
+                                            </small>
+                                          <% } %>
                                         </div>
+                                    
+                                        <!-- Quantity selector below price -->
+                                        <div class="input-group input-group-sm my-2" style="width: 100px;">
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                onclick="decreaseQty('qty<%= product._id %>')">−</button>
+                                            <input type="text" class="form-control text-center"
+                                                id="qty<%= product._id %>" value="1" readonly>
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                onclick="increaseQty('qty<%= product._id %>', '<%= product.stock %>')">+</button>
+                                        </div>
+                                    </div>
+                                    
 
                                         <!-- Actions on the right side -->
                                         <div class="wishlist-actions text-end">
-                                            <!-- <form method="POST" action="/wishlist/remove/<%= product._id %>"
-                                                style="display: inline;">
-                                                <button type="submit"
-                                                    class="btn btn-outline-danger btn-sm">Remove</button>
-                                            </form> -->
+                                         
                                             <a class="btn btn-outline-danger btn-sm" href="#" onclick="confirmRemove('<%=product._id%>')">
                                                 Remove
                                             </a>

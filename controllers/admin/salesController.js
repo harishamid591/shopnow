@@ -2,17 +2,7 @@ const Order = require('../../models/orderSchema'); // Adjust path as needed
 const PDFDocument = require('pdfkit');
 const productModel = require('../../models/productSchema');
 const categoryModel = require("../../models/categorySchema")
-
-
-// const generatePDF = require('../utils/generatePDF'); // Replace with your actual PDF logic
-// const generateExcel = require('../utils/generateExcel'); // Replace with your actual Excel logic
-
-
-// const finalAmount = order.finalAmount - (order.deliveryCharge || 0);
-// const actualDiscount = orderRegularPrice - finalAmount;
-// const couponDiscount = order.couponApplied
-//   ? (order.totalPrice - order.finalAmount)
-//   : 0;
+const ExcelJS = require('exceljs');
 
 
 const loadSalesPage = async (req, res) => {
@@ -61,17 +51,25 @@ const loadSalesPage = async (req, res) => {
       .populate('orderedItems.product')
       .sort({ createdOn: 1 });
 
-
     let totalRegularPrice = 0;
     let totalFinalAmount = 0;
 
     const sales = orders.map(order => {
-      const orderRegularPrice = order.orderedItems.reduce((sum, item) => {
+      // Exclude returned products for correct sales reporting
+      const nonReturnedItems = order.orderedItems.filter(item => item.status !== 'returned');
+
+      const orderRegularPrice = nonReturnedItems.reduce((sum, item) => {
         return sum + (item.regularPrice * item.quantity);
       }, 0);
 
-      const finalAmount = order.finalAmount - (order.deliveryCharge || 0);
+      const nonReturnedAmount = nonReturnedItems.reduce((sum, item) => {
+        return sum + (item.price * item.quantity);
+      }, 0);
+
+      const finalAmount = nonReturnedAmount;
+
       const actualDiscount = orderRegularPrice - finalAmount;
+
       const couponDiscount = order.couponApplied
         ? (order.totalOrderPrice - order.finalAmount)
         : 0;
@@ -81,16 +79,18 @@ const loadSalesPage = async (req, res) => {
 
       return {
         orderId: order.orderId,
-        amount: finalAmount,
+        amount: finalAmount, // updated amount excluding returned products
         discount: order.discount || 0,
         coupon: couponDiscount,
         lessPrice: actualDiscount,
         date: order.createdOn,
+        paymentMethod: order.paymentMethod,
         items: order.orderedItems.map(item => ({
           name: item.productName,
           quantity: item.quantity,
           regularPrice: item.regularPrice,
-          finalPrice: item.price
+          finalPrice: item.price,
+          status: item.status // optional: useful for debugging
         }))
       };
     });
@@ -98,7 +98,7 @@ const loadSalesPage = async (req, res) => {
     // Summary
     const salesData = {
       sales,
-      totalSales: totalFinalAmount,
+      totalSales: totalFinalAmount, // correct total sales
       orderCount: sales.length,
       discounts: sales.reduce((sum, sale) => sum + sale.discount, 0),
       coupons: sales.reduce((sum, sale) => sum + sale.coupon, 0),
@@ -120,64 +120,6 @@ const loadSalesPage = async (req, res) => {
     });
   }
 };
-
-// const generatePDF = async (res, salesData) => {
-//   const doc = new PDFDocument();
-  
- 
-//   res.setHeader("Content-Type", "application/pdf");
-//   res.setHeader("Content-Disposition", "attachment; filename=sales-report.pdf");
-
-//   doc.pipe(res);
-
-//   // Add content to PDF
-//   doc.fontSize(20).text("Sales Report", { align: "center" });
-//   doc.moveDown();
-
-//   // Add summary
-//   doc.fontSize(14).text("Summary");
-//   doc.fontSize(12)
-//       .text(`Total Sales: Rs. ${salesData.totalSales.toLocaleString()}`)
-//       .text(`Total Orders: ${salesData.orderCount}`)
-//       .text(`Total Coupons: Rs. ${salesData.discounts.toLocaleString()}`) 
-//       .text(`Total Discounts: Rs. ${salesData.lessPrices.toLocaleString()}`); 
-
-//   doc.moveDown();
-
-  
-//   doc.fontSize(14).text("Detailed Sales");
-//   let y = doc.y + 20;
-
-//   // Table headers
-//   const headers = ["Date", "Order ID", "Amount", "Discounts", "Coupons"];
-//   let x = 50;
-//   headers.forEach((header) => {
-//       doc.text(header, x, y);
-//       x += 100;
-//   });
-
-//   // Table rows
-//   y += 20;
-//   salesData.sales.forEach((sale) => {
-//       x = 50;
-//       doc.text(new Date(sale.date).toLocaleDateString(), x, y);
-//       x += 100;
-      
-//       // Extract only the last 12 characters of orderId
-//       const shortOrderId = sale.orderId.toString().slice(-12);
-//       doc.text(shortOrderId, x, y);
-//       x += 100;
-
-//       doc.text(`Rs. ${sale.amount.toLocaleString()}`, x, y);
-//       x += 100;
-//       doc.text(`Rs. ${sale.lessPrice.toLocaleString()}`, x, y); 
-//       x += 100;
-//       doc.text(`Rs. ${sale.discount.toLocaleString()}`, x, y); 
-//       y += 20;
-//   });
-
-//   doc.end();
-// }
 
 const generatePDF = async (res, salesData) => {
   const PDFDocument = require('pdfkit');
@@ -279,6 +221,46 @@ const generatePDF = async (res, salesData) => {
   doc.end();
 };
 
+const generateExcel = async (res, salesData) => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Sales Report');
+  
+  // Add headers
+  worksheet.columns = [
+    { header: 'Date', key: 'date', width: 15 },
+    { header: 'Order ID', key: 'orderId', width: 30 },
+    { header: 'Amount', key: 'amount', width: 15 },
+    { header: 'Discounts', key: 'lessPrice', width: 15 }, 
+    { header: 'Coupons', key: 'discount', width: 15 }
+  ];
+  
+  
+  worksheet.addRow(['Summary']);
+  worksheet.addRow(['Total Sales', '', `Rs. ${salesData.totalSales.toLocaleString()}`]);
+  worksheet.addRow(['Total Orders', '', salesData.orderCount]);
+  worksheet.addRow(['Total Discounts', '', `Rs. ${salesData.discounts.toLocaleString()}`]);
+  worksheet.addRow(['Total Less Prices', '', `Rs. ${salesData.lessPrices.toLocaleString()}`]);
+  worksheet.addRow([]);
+  
+  
+  worksheet.addRow(['Detailed Sales']);
+  salesData.sales.forEach(sale => {
+    worksheet.addRow({
+      date: new Date(sale.date).toLocaleDateString(),
+      orderId: sale.orderId.toString(),
+      amount: `Rs. ${sale.amount.toLocaleString()}`,
+      lessPrice: `Rs. ${sale.lessPrice.toLocaleString()}`, 
+      discount: `Rs. ${sale.discount.toLocaleString()}` 
+    });
+  });
+  
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename=sales-report.xlsx');
+  
+  await workbook.xlsx.write(res);
+};
+
 const loadOfferManagement = async(req, res) => {
   const productOffers = [
     {
@@ -313,15 +295,6 @@ const loadOfferManagement = async(req, res) => {
       isActive: true,
     }
   ];
-
-  // res.render('admin/offer-management', {
-  //   productOffers,
-  //   categoryOffers,
-  //   products: await productModel.find({}, 'name'),      // to populate the product dropdown
-  //   categories: await categoryModel.find({}, 'name'),   // to populate the category dropdown
-  // });
-  
-
 
   res.render("offer-management", {
     productOffers,

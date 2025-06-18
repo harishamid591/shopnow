@@ -96,6 +96,27 @@
           </div>
         </div>
 
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            <label for="quantity" class="form-label">Quantity</label>
+            <input type="number" class="form-control" id="quantity" name="quantity" min="1" placeholder="e.g., 100">
+          </div>
+        
+          <div class="mb-3 col-md-6">
+            <label for="unit" class="form-label">Unit</label>
+            <select class="form-select" id="unit" name="unit" required>
+              <option selected disabled value="">Select Unit</option>
+              <option value="g">Gram (g)</option>
+              <option value="kg">Kilogram (kg)</option>
+              <option value="ml">Millilitre (ml)</option>
+              <option value="litre">Litre</option>
+              <option value="pcs">Pieces</option>
+              <option value="pack">Packet</option>
+            </select>
+          </div>
+        </div>
+      
+
         <div class="d-grid">
           <button type="submit" class="btn btn-primary">Publish</button>
         </div>

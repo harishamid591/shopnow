@@ -19,10 +19,21 @@ const productSchema = new Schema({
         type:Number,
         required:true
     },
+    productQuantity:{
+        type:Number,
+        default:null
+    },
+    unit:{
+        type:String,
+        default:null
+    },
     category:{
         type: Schema.Types.ObjectId,
         ref:'Category',
         // required:true
+    },
+    effectiveDiscount:{
+        type:Number
     },
     brand:{
         type:String,
