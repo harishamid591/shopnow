@@ -74,7 +74,7 @@
         <div class="row g-4">
           <% categories.forEach(category=> { %>
             <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-              <a href="/filter?category=<%= category._id %>" class="text-decoration-none">
+              <a href="/allProducts?category=<%= category._id %>" class="text-decoration-none">
                 <div class="category-card text-center p-2">
                   <img src="<%= category.categoryImage %>" alt="Category Thumbnail" class="img-fluid" />
                   <h3 class="category-title mt-2">

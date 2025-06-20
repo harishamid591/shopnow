@@ -1,22 +1,14 @@
 const mongoose = require('mongoose')
 const {Schema} = mongoose
 
-const brandSchema = new Schema({
-    brandName:{
-        type:String,
-        required:true
-    },
-    brandImage:{
-        type:[String],
-        required:true
-    },
-    isBlocked:{
-        type:Boolean,
-        default:false
+const brandSchema = new mongoose.Schema({
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      unique: true
     }
-},{
-    timestamps:true
-})
+  }, { timestamps: true });
 
 const brandModel = mongoose.model('Brand',brandSchema)
 

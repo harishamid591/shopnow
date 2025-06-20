@@ -348,6 +348,27 @@
             };
 
             const rzp = new Razorpay(options);
+
+            // Handle payment failure
+            rzp.on('payment.failed', function (response) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Payment Failed',
+                    text:'Transaction failed. Please try again.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Retry',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Retry payment
+                        rzp.open();
+                    } else {
+                        // Optionally handle cancel logic
+                        console.log("User cancelled retry");
+                    }
+                });
+            });
+
             rzp.open();
 
             // Hide the modal after opening Razorpay

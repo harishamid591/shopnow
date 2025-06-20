@@ -11,7 +11,7 @@ const productDetails = async (req, res) => {
         const userId = req.session.user;
         const productId = req.params.id;
 
-        const product = await productModel.findOne({ _id: productId }).populate('category');
+        const product = await productModel.findOne({ _id: productId }).populate('category').populate('brand');
 
 
         if (!product) {
@@ -64,102 +64,6 @@ const productDetails = async (req, res) => {
         res.redirect("/pageNotFound")
     }
 }
-
-// const allProducts = async (req, res) => {
-//     try {
-//       const userId = req.session.user;
-  
-//       const page = parseInt(req.query.page) || 1;
-//       const limit = 8;
-//       const skip = (page - 1) * limit;
-  
-//       let query = {
-//         isBlocked: false,
-//       };
-  
-//       if (req.query.search) {
-//         query.productName = { $regex: req.query.search, $options: "i" };
-//       }
-  
-//       const categories = await categoryModel.find({ isListed: true });
-//       query.category = { $in: categories.map((category) => category._id) };
-  
-//       let sort = {};
-//       switch (req.query.sort) {
-//         case "price_asc":
-//           sort = { price: 1 };
-//           break;
-//         case "price_desc":
-//           sort = { price: -1 };
-//           break;
-//         case "name_asc":
-//           sort = { productName: 1 };
-//           break;
-//         case "name_desc":
-//           sort = { productName: -1 };
-//           break;
-//         default:
-//           sort = { createdAt: -1 };
-//       }
-  
-//       const products = await productModel
-//         .find(query)
-//         .populate("category")
-//         .sort(sort)
-//         .skip(skip)
-//         .limit(limit);
-
-//       const totalProducts = await productModel.countDocuments(query);
-//       const totalPages = Math.ceil(totalProducts / limit);
-  
-//       // Handle wishlist flag and effective discount
-//       if (userId) {
-//         const wishlist = await wishlistModel.findOne({ userId });
-//         const wishlistProductIds = wishlist ? wishlist.product.map(id => id.toString()) : [];
-
-//         products.forEach(product => {
-//           product.inWishlist = wishlistProductIds.includes(product._id.toString());
-//         });
-//       } else {
-//         products.forEach(product => {
-//           product.inWishlist = false;
-//         });
-//       }
-
-    
-//       // Apply effectiveDiscount for each product
-//       products.forEach(product => {
-//         const productDiscount = product.discount || 0;
-//         const categoryOffer = product.category?.categoryOffer || 0;
-//         product.effectiveDiscount = Math.max(productDiscount, categoryOffer);
-//       });
-
-      
-
-//       const renderData = {
-//         products,
-//         currentPage: page,
-//         totalPages: totalPages,
-//         categories,
-//         brands: ["Rajgiraattad", "Pampers", "Amul", "Nestle", "Parle", "Britannia"],
-//         selectedCategory: null,
-//         selectedBrand: null,
-//         selectCategoryName: null,
-//       };
-  
-//       if (userId) {
-//         const userData = await userModel.findById(userId);
-//         renderData.user = userData;
-//       }
-  
-//       return res.render("allProducts", renderData);
-  
-//     } catch (error) {
-//       console.error("Error for show all product", error);
-//       res.redirect("/pageNotFound");
-//     }
-//   };
-
 
   
 const filterProduct = async (req, res) => {
@@ -398,6 +302,7 @@ const allProducts = async (req, res) => {
 
     // Fetch only listed categories
     const categories = await categoryModel.find({ isListed: true });
+    const brands = await brandModel.find({});
 
     // Sorting logic
     let sort = {};
@@ -462,7 +367,7 @@ const allProducts = async (req, res) => {
       user: userData,
       products,
       categories,
-      brands: ['Rajgiraattad', 'Pampers', 'Amul', 'Nestle', 'Parle', 'Britannia'],
+      brands,
       currentPage: page,
       totalPages,
       selectedCategory: category || null,

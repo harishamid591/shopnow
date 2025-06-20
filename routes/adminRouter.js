@@ -7,6 +7,7 @@ const productController = require('../controllers/admin/productController')
 const orderController = require('../controllers/admin/orderController')
 const couponController = require('../controllers/admin/couponController')
 const salesController = require('../controllers/admin/salesController')
+const brandController = require('../controllers/admin/brandController')
 const upload = require('../config/multer')
 
 
@@ -72,6 +73,11 @@ router.get('/sales/report', adminAuth, salesController.loadSalesPage);
 router.get('/offers',adminAuth,salesController.loadOfferManagement)
 
 
+//brands
+router.get('/brands',adminAuth,brandController.getBrands)
+router.post('/brands/add',adminAuth,brandController.addBrands)
+router.post('/brands/edit',adminAuth,brandController.editBrands)
+router.get('/brands/delete/:id',adminAuth,brandController.deleteBrands)
 
 
 

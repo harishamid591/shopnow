@@ -36,8 +36,8 @@ const productSchema = new Schema({
         type:Number
     },
     brand:{
-        type:String,
-  
+        type: Schema.Types.ObjectId,
+        ref:'Brand',
     },
     discount:{
         type:Number,

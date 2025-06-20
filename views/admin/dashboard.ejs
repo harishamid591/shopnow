@@ -85,7 +85,7 @@
   </div>
 
   <!-- Top 10 Brands -->
-  <!-- <div class="card mb-4">
+  <div class="card mb-4">
     <div class="card-header">
       <h5 class="mb-0">Top 10 Best Selling Brands</h5>
     </div>
@@ -102,14 +102,14 @@
           <% topBrands.forEach((brand, index) => { %>
             <tr>
               <td><%= index + 1 %></td>
-              <td><%= brand._id %></td> 
+              <td><%= brand.brandName %></td> 
               <td><%= brand.totalQuantity %></td>
             </tr>
           <% }) %>
         </tbody>
       </table>
     </div>
-  </div> -->
+  </div>
 
 </div>
 

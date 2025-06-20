@@ -72,9 +72,9 @@
             <label for="brand" class="form-label">Brand</label>
             <select class="form-select" id="brand" name="brand" >
               <option selected disabled value="">Select Brand</option>
-   
-              <option value="brand">brandname</option>
-        
+              <% brands.forEach(function(brand) { %>
+                <option value="<%= brand.name %>"><%= brand.name %></option>
+              <% }) %>
             </select>
           </div>
         </div>

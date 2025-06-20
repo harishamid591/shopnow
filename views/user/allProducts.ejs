@@ -108,7 +108,7 @@
                     <ul class="ps-1">
                         <% categories.forEach(category=> { %>
                             <li class="filter-item">
-                                <a href="/allProducts?category=<%= category._id %>&sort=<%= sort %>&search=<%= search || '' %>"
+                                <a href="/allProducts?category=<%= category._id %>&brand=<%= selectedBrand || '' %>&sort=<%= sort %>&search=<%= search || '' %>&gt=<%= priceGt || '' %>&lt=<%= priceLt || '' %>"
                                     class="text-light text-decoration-none d-block <%= selectedCategory == category._id ? 'active' : '' %>">
                                     <%= category.categoryName %>
                                 </a>
@@ -123,10 +123,10 @@
                     <ul class="ps-1">
                         <% brands.forEach(brand=> { %>
                             <li class="filter-item">
-                                <a href="/filter?brand=<%= brand._id %>"
-                                    class="text-light text-decoration-none d-block <%= selectedBrand === brand ? 'active' : '' %>">
-                                    <%= brand %>
-                                </a>
+                                <a href="/allProducts?brand=<%= brand._id %>&category=<%= selectedCategory || '' %>&sort=<%= sort %>&search=<%= search || '' %>&gt=<%= priceGt || '' %>&lt=<%= priceLt || '' %>"
+                                    class="text-light text-decoration-none d-block <%= selectedBrand == brand._id.toString() ? 'active' : '' %>">
+                                    <%= brand.name %>
+                                  </a>
                             </li>
                             <% }) %>
                     </ul>
@@ -137,14 +137,15 @@
                     <div class="filter-title">Filter by Price</div>
                     <form id="price-filter-form">
                         <div class="price-options d-flex flex-column gap-2">
-                            <a href="/allProducts?gt=0&lt=500&sort=<%= sort %>&search=<%= search || '' %>" class="price-button btn btn-outline-light btn-sm">Under
-                                ₹500</a>
-                            <a href="/allProducts?gt=500&lt=1000&sort=<%= sort %>&search=<%= search || '' %>" class="price-button btn btn-outline-light btn-sm">₹500
-                                - ₹1000</a>
-                            <a href="/allProducts?gt=1000&lt=1500&sort=<%= sort %>&search=<%= search || '' %>"
-                                class="price-button btn btn-outline-light btn-sm">₹1000 - ₹1500</a>
-                            <a href="/allProducts?gt=1500&lt=100000&sort=<%= sort %>&search=<%= search || '' %>"
-                                class="price-button btn btn-outline-light btn-sm">Above ₹1500</a>
+                            
+                            <a href="/allProducts?gt=0&lt=500&category=<%= selectedCategory || '' %>&brand=<%= selectedBrand || '' %>&sort=<%= sort %>&search=<%= search || '' %>" class="price-button btn btn-outline-light btn-sm">Under ₹500</a>
+
+                            <a href="/allProducts?gt=500&lt=1000&category=<%= selectedCategory || '' %>&brand=<%= selectedBrand || '' %>&sort=<%= sort %>&search=<%= search || '' %>" class="price-button btn btn-outline-light btn-sm">₹500 - ₹1000</a>
+                            
+                            <a href="/allProducts?gt=1000&lt=1500&category=<%= selectedCategory || '' %>&brand=<%= selectedBrand || '' %>&sort=<%= sort %>&search=<%= search || '' %>" class="price-button btn btn-outline-light btn-sm">₹1000 - ₹1500</a>
+                            
+                            <a href="/allProducts?gt=1500&lt=100000&category=<%= selectedCategory || '' %>&brand=<%= selectedBrand || '' %>&sort=<%= sort %>&search=<%= search || '' %>" class="price-button btn btn-outline-light btn-sm">Above ₹1500</a>
+                                    
                         </div>
                     </form>
                 </div>
@@ -187,6 +188,10 @@
                                                 <h6 class="card-title text-truncate fw-semibold">
                                                     <%= product.productName %>
                                                 </h6>
+
+                                                <p class="text-muted small mb-2 text-start">
+                                                    <%= product.productQuantity %> <%= product.unit %>
+                                                  </p>
 
                                                 <!-- Price -->
                                                 <div class="text-start mb-2">

@@ -11,7 +11,7 @@ const getProductAddPage = async (req, res) => {
     try {
 
         const categories = await categoryModel.find({ isListed: true });
-        const brands = await brandModel.find({ isBlocked: false });
+        const brands = await brandModel.find({});
 
         res.render('addProduct', {
             categories,
@@ -49,6 +49,7 @@ const addProducts = async (req, res) => {
             }
 
             const categoryId = await categoryModel.findOne({ categoryName: products.category });
+            const brandId = await brandModel.findOne({name:products.brand})
 
             if (!categoryId) {
                 return res.status(400).json({ success: false, message: "Category not found" });
@@ -57,7 +58,7 @@ const addProducts = async (req, res) => {
             const newProduct = new productModel({
                 productName: products.productName,
                 description: products.description,
-                brand: products.brand,
+                brand: brandId._id,
                 category: categoryId._id,
                 discount: products.discount,
                 price: products.price,
@@ -97,6 +98,7 @@ const displayProducts = async (req, res) => {
         ).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit * 1).populate('category').exec();
 
         const categories = await categoryModel.find({isListed:true});
+        const brands = await brandModel.find({});
 
         const count = await productModel.find(
             {
@@ -112,7 +114,8 @@ const displayProducts = async (req, res) => {
                 products: productData,
                 currentPage: page,
                 totalPages: Math.ceil(count / limit),
-                categories
+                categories,
+                brands
 
             })
         }
@@ -131,7 +134,7 @@ const editProduct = async (req, res) => {
             price,
             stock,
             discount,
-            brand,
+            brandId,
             quantity,
             unit,
             description,
@@ -192,7 +195,7 @@ const editProduct = async (req, res) => {
             product.price == price &&
             product.stock == stock &&
             product.discount == discount &&
-            product.brand == brand &&
+            product.brand == brandId &&
             product.productQuantity == quantity &&
             product.unit == unit &&
             product.description == description &&
@@ -212,7 +215,7 @@ const editProduct = async (req, res) => {
                 price,
                 stock,
                 discount,
-                brand,
+                brand:brandId,
                 description,
                 productQuantity:quantity,
                 unit,

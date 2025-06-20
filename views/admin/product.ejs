@@ -192,7 +192,11 @@
 
                     <div class="mb-3">
                         <label class="form-label">Brand</label>
-                        <input type="text" class="form-control" id="brand" name="brand">
+                        <select class="form-select" name="brandId" id="brandId">
+                            <% brands.forEach(brand => { %>
+                                <option value="<%= brand._id %>"><%= brand.name %></option>
+                            <% }) %>
+                        </select>
                     </div>
 
                     <div class="mb-3">
@@ -262,7 +266,7 @@
         document.getElementById('stock').value = product.stock;
         document.getElementById('discount').value = product.discount;
         document.getElementById('categoryId').value = product.category._id;
-        document.getElementById('brand').value = product.brand || '';
+        document.getElementById('brandId').value = product.brand || '';
         document.getElementById('description').value = product.description || '';
         document.getElementById('quantity').value = product.productQuantity || '';
         document.getElementById('unit').value = product.unit || '';
@@ -497,7 +501,7 @@ function handleToggleSubmit(event) {
         formData.append('stock', document.getElementById('stock').value);
         formData.append('discount', document.getElementById('discount').value);
         formData.append('categoryId', document.getElementById('categoryId').value);
-        formData.append('brand', document.getElementById('brand').value);
+        formData.append('brandId', document.getElementById('brandId').value);
         formData.append('description', document.getElementById('description').value);
         formData.append('quantity', document.getElementById('quantity').value);
         formData.append('unit', document.getElementById('unit').value);

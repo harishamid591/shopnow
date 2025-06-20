@@ -167,6 +167,9 @@
 
                 <div class="card-body p-2">
                     <h6 class="card-title text-truncate fw-semibold"><%= rp.productName %></h6>
+                    <p class="text-muted small mb-2 text-start">
+                        <%= rp.productQuantity %> <%= rp.unit %>
+                      </p>
                     <div class="text-start mb-2">
                         <span class="fw-bold text-success">
                             ₹<%= rp.price - (rp.price * rp.effectiveDiscount / 100) %>
