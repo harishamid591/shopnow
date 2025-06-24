@@ -242,6 +242,11 @@ const placeWalletOrder = async (req, res) => {
         }
     
         discount = (totalPrice * coupon.offerPrice) / 100;
+
+        if (coupon.maxPrice) {
+          discount = Math.min(discount, coupon.maxPrice);
+        }
+    
         couponApplied = true;
         couponName = coupon.name;
     

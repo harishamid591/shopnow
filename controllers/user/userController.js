@@ -203,7 +203,7 @@ const verifyOtp = async (req, res) => {
             if (referrer) {
                 const coupon = new couponModel({
                     name: "REF" + Math.random().toString(36).substring(2, 8).toUpperCase(),
-                    offerPrice: 25, // ₹100 or % discount
+                    offerPrice: 100, // ₹100 or % discount
                     userId: referrer._id,
                     expireOn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
                     isReferralCoupon: true

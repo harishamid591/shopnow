@@ -368,10 +368,9 @@
                         <!-- Applied Coupon Display -->
                         <div id="appliedCouponSection" class="applied-coupon-section" style="display: none;">
                             <p class="applied-coupon-text">
-                                <strong>Applied Coupon:</strong> <span id="appliedCouponName"></span>  <br>
-                                
+                                <strong>Applied Coupon:</strong> <span id="appliedCouponName"></span>   
                             </p>
-                           <p><small id="appliedCouponDiscount"></small></p> 
+                           
                             <button class="btn btn-remove-coupon" onclick="removeCoupon()">Remove</button>
                         </div>
                     </div>
@@ -688,7 +687,7 @@
                 appliedCoupon = result.coupon;
                 
                 // Show success feedback
-                const savedAmount = (result.discount / 100) * subtotal;
+                const savedAmount = result.discount;
                 showCouponFeedback(`Coupon applied! You saved ₹${savedAmount.toFixed(2)}`, 'success');
                 
                 // Update applied coupon display
@@ -753,7 +752,6 @@
     // Helper function to display applied coupon
     function displayAppliedCoupon(coupon, discount) {
         document.getElementById('appliedCouponName').textContent = coupon.code;
-        document.getElementById('appliedCouponDiscount').textContent = `Discount: ${discount}%`;
         document.getElementById('appliedCouponSection').style.display = 'flex';
     }
 
@@ -772,7 +770,7 @@
         }
 
         // Calculate discount amount based on percentage
-        const discountAmount = (discountPercent / 100) * originalSubtotal;
+        const discountAmount = discountPercent;
 
         // Show and update the coupon discount row
         couponDiscountRow.style.display = 'flex';

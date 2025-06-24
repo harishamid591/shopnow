@@ -121,7 +121,7 @@
             <% if (generalCoupons && generalCoupons.length > 0) { %>
                 <% generalCoupons.forEach(coupon => { %>
                     <div class="coupon-card">
-                        <h6><%= coupon.name %> - <%= coupon.offerPrice %>% OFF</h6>
+                        <h6><%= coupon.name %> - <%= coupon.offerPrice %>% OFF (up to ₹<%= coupon.maxPrice %>)</h6>
                         <p>Min Purchase: ₹<%= coupon.minimumPrice %></p>
                         <p>Valid till: <%= coupon.formattedExpiry %></p>
                         <button class="btn btn-sm btn-success copy-btn" onclick="copyToClipboard('<%= coupon.name %>')">Copy Code</button>

@@ -23,8 +23,7 @@
       <input type="date" class="form-control" id="endDate" name="endDate" >
     </div>
     <div class="col-md-3">
-        
-      <label for="offer" class="form-label">Offer Price</label>
+      <label for="offer" class="form-label">Coupon Discount(%)</label>
       <div id="errorOffer" class="text-danger small mb-1"></div>
       <input type="number" class="form-control" id="offer" name="offer" >
     </div>
@@ -33,6 +32,12 @@
       <label for="minPrice" class="form-label">Minimum Price</label>
       <div id="errorMinPrice" class="text-danger small mb-1"></div>
       <input type="number" class="form-control" id="minPrice" name="minPrice" >
+    </div>
+
+    <div class="col-md-3">
+      <label for="maxPrice" class="form-label">Maximum Price</label>
+      <div id="errorMaxPrice" class="text-danger small mb-1"></div>
+      <input type="number" class="form-control" id="maxPrice" name="maxPrice" >
     </div>
     <div class="col-12">
       <button type="submit" class="btn btn-success">Add Coupon</button>
@@ -50,6 +55,7 @@
           <th>End Date</th>
           <th>Offer Price</th>
           <th>Minimum Price</th>
+          <th>Max Price</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -62,6 +68,7 @@
               <td><%= coupon.expireOn %></td>
               <td><%= coupon.offerPrice %></td>
               <td><%= coupon.minimumPrice %></td>
+              <td><%= coupon.maxPrice %></td>
               <td>
                 <button class="btn btn-primary btn-sm me-2" data-coupon="<%= encodeURIComponent(JSON.stringify(coupon)) %>" onclick="openEditModalFromButton(this)">
                   <i class="fa fa-edit"></i>
@@ -114,7 +121,7 @@
             <input type="date" class="form-control" name="endDate" id="editEnd" >
           </div>
           <div class="mb-3">
-            <label for="editOffer" class="form-label">Offer Price</label>
+            <label for="editOffer" class="form-label">Coupon Discount</label>
             <div id="errorEditOffer" class="text-danger small mb-1"></div>
             <input type="number" class="form-control" name="offerPrice" id="editOffer" >
           </div>
@@ -122,6 +129,11 @@
             <label for="editMin" class="form-label">Minimum Price</label>
             <div id="errorEditMinPrice" class="text-danger small mb-1"></div>
             <input type="number" class="form-control" name="minPrice" id="editMin" >
+          </div>
+          <div class="mb-3">
+            <label for="editMax" class="form-label">Maximum Price</label>
+            <div id="errorEditMaxPrice" class="text-danger small mb-1"></div>
+            <input type="number" class="form-control" name="maxPrice" id="editMax" >
           </div>
         </div>
         <div class="modal-footer">
@@ -157,6 +169,7 @@
     document.getElementById('editEnd').value = formatDateForInput(coupon.expireOn);
     document.getElementById('editOffer').value = coupon.offerPrice;
     document.getElementById('editMin').value = coupon.minimumPrice;
+    document.getElementById('editMax').value = coupon.maxPrice;
     const editModal = new bootstrap.Modal(document.getElementById('editCouponModal'));
     editModal.show();
   }
@@ -165,7 +178,7 @@
     event.preventDefault();
 
     // Clear previous errors
-    ['Name', 'StartDate', 'EndDate', 'Offer', 'MinPrice'].forEach(field => {
+    ['Name', 'StartDate', 'EndDate', 'Offer', 'MinPrice', 'MaxPrice'].forEach(field => {
       document.getElementById('error' + field).textContent = '';
     });
 
@@ -174,6 +187,7 @@
     const endDate = document.getElementById('endDate').value;
     const offer = document.getElementById('offer').value.trim();
     const minPrice = document.getElementById('minPrice').value.trim();
+    const maxPrice = document.getElementById('maxPrice').value.trim();
 
     let hasError = false;
 
@@ -200,6 +214,10 @@
       document.getElementById('errorMinPrice').textContent = 'Valid minimum price is required.';
       hasError = true;
     }
+    if (!maxPrice || isNaN(maxPrice) || maxPrice <= 0) {
+      document.getElementById('errorMaxPrice').textContent = 'Valid maximum price is required.';
+      hasError = true;
+    }
 
     if (hasError) return;
 
@@ -208,7 +226,7 @@
       const response = await fetch('/admin/createCoupon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, startDate, endDate, offer, minPrice })
+        body: JSON.stringify({ name, startDate, endDate, offer, minPrice, maxPrice })
       });
 
       if (response.ok) {
@@ -242,7 +260,7 @@
         event.preventDefault();
 
         // Clear old error messages
-        ['Name', 'StartDate', 'EndDate', 'Offer', 'MinPrice'].forEach(field => {
+        ['Name', 'StartDate', 'EndDate', 'Offer', 'MinPrice', 'MaxPrice'].forEach(field => {
             document.getElementById('errorEdit' + field).textContent = '';
         });
 
@@ -251,6 +269,7 @@
         const endDate = document.getElementById('editEnd').value;
         const offer = document.getElementById('editOffer').value.trim();
         const minPrice = document.getElementById('editMin').value.trim();
+        const maxPrice = document.getElementById('editMax').value.trim();
         const id = document.getElementById('editId').value;
 
 
@@ -279,6 +298,10 @@
         document.getElementById('errorEditMinPrice').textContent = 'Valid minimum price is required.';
         hasError = true;
     }
+    if (!maxPrice || isNaN(maxPrice) || maxPrice <= 0) {
+      document.getElementById('errorEditMaxPrice').textContent = 'Valid maximum price is required.';
+      hasError = true;
+    }
 
     if (hasError) return;
 
@@ -287,7 +310,7 @@
         const response = await fetch('/admin/edit-coupon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, name, startDate, endDate, offerPrice: offer, minPrice })
+        body: JSON.stringify({ id, name, startDate, endDate, offerPrice: offer, minPrice, maxPrice })
         });
 
         if (response.ok) {

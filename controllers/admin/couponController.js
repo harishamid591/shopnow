@@ -28,7 +28,7 @@ function formatDate(date) {
 
 const createCoupon = async(req, res) => {
     try {
-        const { name, startDate, endDate, offer, minPrice } = req.body;
+        const { name, startDate, endDate, offer, minPrice ,maxPrice} = req.body;
     
         const newCoupon = new couponModel({
         name,
@@ -36,6 +36,7 @@ const createCoupon = async(req, res) => {
         expireOn: new Date(endDate),
         offerPrice: offer,
         minimumPrice: minPrice,
+        maxPrice
         });
     
         await newCoupon.save();
@@ -51,9 +52,9 @@ const createCoupon = async(req, res) => {
 
 const editCoupon = async (req, res) => {
     try {
-        const { id, name, startDate, endDate, offerPrice, minPrice } = req.body;
+        const { id, name, startDate, endDate, offerPrice, minPrice, maxPrice } = req.body;
 
-        if (!id || !name || !startDate || !endDate || !offerPrice || !minPrice) {
+        if (!id || !name || !startDate || !endDate || !offerPrice || !minPrice || !maxPrice) {
             return res.status(400).send("All fields are required");
         }
 
@@ -68,7 +69,8 @@ const editCoupon = async (req, res) => {
             createdOn: new Date(startDate),  // Store as Date
             expireOn: new Date(endDate),
             offerPrice: offerPrice,
-            minimumPrice: minPrice
+            minimumPrice: minPrice,
+            maxPrice:maxPrice
         },
         { new: true }
         );

@@ -150,6 +150,9 @@ const placeOrder = async (req, res) => {
       
         // Apply general coupon discount
         discount = (totalPrice * coupon.offerPrice) / 100;
+        if (coupon.maxPrice) {
+          discount = Math.min(discount, coupon.maxPrice);
+        }
         couponName = coupon.name;
         couponApplied = true;
       
@@ -606,9 +609,14 @@ const createRazorpayOrder = async (req, res) => {
           });
         }
 
-        // General coupon: % based discount
-        discountAmount = (totalAmount * coupon.offerPrice) / 100;
+        // General coupon: % based discount, capped by maxPrice if applicable
+        let calculatedDiscount = (totalAmount * coupon.offerPrice) / 100;
+        if (coupon.maxPrice) {
+          calculatedDiscount = Math.min(calculatedDiscount, coupon.maxPrice);
+        }
+        discountAmount = calculatedDiscount;
         totalAmount -= discountAmount;
+
       }
     }
 
@@ -739,7 +747,7 @@ const verifyPayment = async (req, res) => {
           return res.status(400).json({ success: false, message: "Referral coupon already used" });
         }
     
-        // Apply 25% discount
+  
         discount = (totalPrice * coupon.offerPrice) / 100;
         couponUsed = true;
         couponName = coupon.name;
@@ -762,7 +770,12 @@ const verifyPayment = async (req, res) => {
           });
         }
     
+        // Apply discount with maxPrice cap
         discount = (totalPrice * coupon.offerPrice) / 100;
+        if (coupon.maxPrice) {
+          discount = Math.min(discount, coupon.maxPrice);
+        }
+
         couponUsed = true;
         couponName = coupon.name;
     

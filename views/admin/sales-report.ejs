@@ -139,6 +139,7 @@
               <tr>
                 <th>Date</th>
                 <th>Order ID</th>
+                <th>Customer Name</th>
                 <th>Amount</th>
                 <th>Discount</th>
                 <th>Coupon</th>
@@ -150,6 +151,7 @@
               <tr>
                 <td><%= new Date(sale.date).toLocaleDateString() %></td>
                 <td class="fw-semibold text-primary"><%= sale.orderId %></td>
+                <td ><%= sale.address.name %></td>
                 <td>₹<%= sale.amount.toLocaleString() %></td>
                 <td class="text-danger">₹<%= sale.lessPrice.toFixed(2) %></td>
                 <td class="text-muted">₹<%= sale.discount.toFixed(2) %></td>

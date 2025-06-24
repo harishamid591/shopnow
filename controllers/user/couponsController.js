@@ -83,15 +83,27 @@ const applyCoupon = async (req, res) => {
         });
       }
     }
+
+    let discount;
+
+    if (coupon.isReferralCoupon) {
+      // Flat discount for referral coupon
+      discount = coupon.offerPrice;
+    } else {
+      // Percentage discount with optional max cap
+      const calculatedDiscount = (orderTotal * coupon.offerPrice) / 100;
+      discount = coupon.maxPrice ? Math.min(calculatedDiscount, coupon.maxPrice) : calculatedDiscount;
+    }
    
     // If everything is valid, return coupon discount
     return res.status(200).json({
       success: true,
       coupon: {
         code: coupon.name,
-        offerPrice: coupon.offerPrice
+        offerPrice: coupon.offerPrice,
+        maxPrice: coupon.maxPrice || null
       },
-      discount: coupon.offerPrice
+      discount: Math.floor(discount) 
     });
 
   } catch (error) {
