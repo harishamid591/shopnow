@@ -210,16 +210,31 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+
+
   function previewImage(event) {
     const input = event.target;
     const preview = document.getElementById("profilePreview");
+    const errorDiv = document.getElementById("profileFormError");
+    errorDiv.textContent = "";
 
     if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const validImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+      if (!validImageTypes.includes(file.type)) {
+        errorDiv.textContent = "Please select a valid image file (jpg, png, webp, gif)";
+        input.value = ""; // Reset the file input
+        preview.src = "<%= user.profilePicture ? user.profilePicture : '/images/default-user.png' %>"; // reset preview
+        return;
+      }
+
+      // ✅ Valid image
       const reader = new FileReader();
       reader.onload = function (e) {
         preview.src = e.target.result;
       };
-      reader.readAsDataURL(input.files[0]);
+      reader.readAsDataURL(file);
     }
   }
 
@@ -289,7 +304,7 @@
   <script>
     Swal.fire({
       icon: 'error',
-      title: 'Invalid OTP',
+      title: 'Incorrect Password',
       text: '<%= error %>',
       confirmButtonColor: '#d33'
     });

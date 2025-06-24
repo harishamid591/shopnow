@@ -39,7 +39,6 @@ router.post('/category-list/:id',adminAuth,categoryController.listOrUnlistCatego
 router.get('/addProducts',adminAuth,productController.getProductAddPage);
 router.post('/addProducts',adminAuth,upload.array('images'),productController.addProducts);
 router.get('/products',adminAuth,productController.displayProducts)
-// router.post('/product-edit/:id',adminAuth, upload.none(),productController.editProduct)
 router.post('/product-edit/:id', adminAuth, upload.array('newImages', 5), productController.editProduct);
 router.post('/product-delete/:id',adminAuth,productController.deleteProduct)
 router.post('/product-isBlocked/:id',adminAuth,productController.isBlockedProduct)
@@ -69,8 +68,6 @@ router.post('/delete-coupon/:id',adminAuth,couponController.deleteCoupon)
 router.get('/sales',adminAuth,salesController.loadSalesPage)
 router.get('/sales/report', adminAuth, salesController.loadSalesPage);
 
-
-router.get('/offers',adminAuth,salesController.loadOfferManagement)
 
 
 //brands

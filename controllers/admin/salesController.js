@@ -261,52 +261,9 @@ const generateExcel = async (res, salesData) => {
   await workbook.xlsx.write(res);
 };
 
-const loadOfferManagement = async(req, res) => {
-  const productOffers = [
-    {
-      productName: "Casual Shirt",
-      discountPercent: 20,
-      startDate: new Date("2025-06-01"),
-      endDate: new Date("2025-06-10"),
-      isActive: true,
-    },
-    {
-      productName: "Running Shoes",
-      discountPercent: 10,
-      startDate: new Date("2025-05-25"),
-      endDate: new Date("2025-06-05"),
-      isActive: false,
-    }
-  ];
-
-  const categoryOffers = [
-    {
-      categoryName: "Electronics",
-      discountPercent: 15,
-      startDate: new Date("2025-06-01"),
-      endDate: new Date("2025-06-30"),
-      isActive: true,
-    },
-    {
-      categoryName: "Men’s Wear",
-      discountPercent: 30,
-      startDate: new Date("2025-06-01"),
-      endDate: new Date("2025-06-10"),
-      isActive: true,
-    }
-  ];
-
-  res.render("offer-management", {
-    productOffers,
-    categoryOffers,
-    products: await productModel.find({}, 'productName'),      // to populate the product dropdown
-    categories: await categoryModel.find({}, 'categoryName'),
-  });
-};
 
 
 
 module.exports = {
   loadSalesPage,
-  loadOfferManagement
 };

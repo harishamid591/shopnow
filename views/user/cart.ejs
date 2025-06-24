@@ -80,16 +80,20 @@
                   <td><img src="<%= item.image %>" alt="<%= item.name %>" class="img-thumbnail product-img"></td>
                   <td><%= item.name %></td>
                   <td>
-                    <div class="d-flex align-items-center">
-                      <button class="btn btn-outline-secondary btn-sm me-2"
-                              onclick="changeQuantity('<%= item._id %>', 'decrease', '<%= item.stock %>')">−</button>
-                      <input type="text" readonly class="form-control text-center" 
-                             id="cartProductQuantity<%= item._id %>" 
-                             value="<%= item.quantity %>" 
-                             style="width: 50px;">
-                      <button class="btn btn-outline-secondary btn-sm ms-2"
-                              onclick="changeQuantity('<%= item._id %>', 'increase', '<%= item.stock %>')">+</button>
-                    </div>
+                    <% if (item.stock === 0) { %>
+                      <span class="text-danger fw-bold">Out of Stock</span>
+                    <% } else { %>
+                      <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-secondary btn-sm me-2"
+                                onclick="changeQuantity('<%= item._id %>', 'decrease', '<%= item.stock %>')">−</button>
+                        <input type="text" readonly class="form-control text-center" 
+                               id="cartProductQuantity<%= item._id %>" 
+                               value="<%= item.quantity %>" 
+                               style="width: 50px;">
+                        <button class="btn btn-outline-secondary btn-sm ms-2"
+                                onclick="changeQuantity('<%= item._id %>', 'increase', '<%= item.stock %>')">+</button>
+                      </div>
+                    <% } %>
                   </td>
                   
                   <td>₹<%= item.price.toFixed(2) %></td>

@@ -113,12 +113,11 @@
     <div class="info">
       <div>
         <p><span class="highlight">Order ID:</span> <%= order.orderId %></p>
+        <p><span class="highlight">Customer Name:</span> <%= order.address.name %></p>
         <p><span class="highlight">Invoice Date:</span> <%= order.invoiceDate ? new Date(order.invoiceDate).toLocaleDateString() : new Date().toLocaleDateString() %></p>
         <p><span class="highlight">Payment Method:</span> <%= order.paymentMethod.toUpperCase() %></p>
       </div>
-      <div>
-        <p><span class="highlight">Customer ID:</span> <%= order.userId %></p>
-      </div>
+  
     </div>
 
     <table>

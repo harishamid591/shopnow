@@ -81,8 +81,7 @@ router.get('/logout',userController.logOut);
 router.get('/',isUserBlocked,userController.loadHome)
 router.get('/productDetails/:id',isUserBlocked,productController.productDetails)
 router.get('/allProducts',isUserBlocked,productController.allProducts)
-// router.get('/filter',isUserBlocked,productController.filterProduct);
-// router.get('/filterPrice',isUserBlocked,productController.filterByPrice);
+
 
 
 // Profile Management

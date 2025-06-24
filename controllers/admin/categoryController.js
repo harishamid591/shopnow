@@ -48,7 +48,10 @@ const addCategory = async (req, res) => {
 
         const { categoryName, offer } = req.body;
 
-        const existsCategory = await categoryModel.findOne({categoryName});
+        const existsCategory = await categoryModel.findOne({
+            categoryName: { $regex: new RegExp(`^${categoryName}$`, 'i') }
+          });
+          
     
         if(existsCategory){
             return res.json({

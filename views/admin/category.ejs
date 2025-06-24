@@ -67,8 +67,10 @@
           </td>
           <td>
             <div class="d-flex justify-content-center align-items-center gap-2">
-              <button class="btn btn-success btn-sm"
-                onclick='openEditModal(<%- JSON.stringify(category) %>)'>Edit</button>
+
+                <button class="btn btn-success btn-sm"
+                data-product="<%= encodeURIComponent(JSON.stringify(category)) %>"
+                onclick="openEditModalFromButton(this)">Edit</button>  
           
               <button class="btn btn-danger btn-sm"
                 onclick="confirmDelete('<%= category._id %>')">Delete</button>
@@ -154,11 +156,16 @@
 
 
 
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Script for Add/Edit Modal and SweetAlert -->
 <script>
   const categoryModal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+
+  function openEditModalFromButton(button) {
+        const category = JSON.parse(decodeURIComponent(button.dataset.product));
+        openEditModal(category);
+    }
 
   function openEditModal(category) {
     document.getElementById('addCategoryModalLabel').innerText = "Edit Category";

@@ -42,9 +42,11 @@
     <ol class="breadcrumb bg-light p-2 rounded">
         <li class="breadcrumb-item"><a href="/">Home</a></li>
         <li class="breadcrumb-item">
-            <a href="/filter?category=<%= product.category._id %>">
+            <a href="/allProducts?category=<%= product.category._id %>">
                 <%= product.category.categoryName %>
             </a>
+
+            
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             <%= product.productName %>

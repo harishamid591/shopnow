@@ -28,6 +28,7 @@ async (accessToken, refreshToken, profile, done) => {
         
     } catch (error) {
 
+        console.log(error)
         return done(err,null)
         
     }
