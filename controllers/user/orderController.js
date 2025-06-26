@@ -221,6 +221,7 @@ const getOrders = async (req, res) => {
     // Fetch user info for displaying name
     const userData = await userModel.findById(userId);
 
+
     // Fetch all orders placed by the user, newest first
     const orders = await orderModel
       .find(query)
@@ -228,7 +229,7 @@ const getOrders = async (req, res) => {
 
 
     res.render('order', {
-      user: { name: userData?.name || "User" },
+      user: userData,
       orders,
       currentPage: "orders",
     });

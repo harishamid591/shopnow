@@ -16,13 +16,14 @@
       
 
   <!-- Sales Chart Section -->
+
   <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h5 class="mb-0">Sales Overview</h5>
       <select id="salesFilter" class="form-select w-auto">
-        <option value="monthly">Monthly</option>
-        <option value="yearly">Yearly</option>
-        <option value="last30">Last 30 Days</option>
+        <option value="monthly" <%= filter === 'monthly' ? 'selected' : '' %>>Monthly</option>
+        <option value="yearly" <%= filter === 'yearly' ? 'selected' : '' %>>Yearly</option>
+        <option value="last30" <%= filter === 'last30' ? 'selected' : '' %>>Last 30 Days</option>
       </select>
     </div>
     <div class="card-body">

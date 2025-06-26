@@ -194,6 +194,7 @@ const loadDashboard = async (req, res) => {
         ]);
 
         res.render("dashboard", {
+            filter,
             salesChartLabels: salesData.labels,
             salesChartData: salesData.data,
             topProducts,

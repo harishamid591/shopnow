@@ -66,13 +66,14 @@ const loadSalesPage = async (req, res) => {
         return sum + (item.price * item.quantity);
       }, 0);
 
-      const finalAmount = nonReturnedAmount;
+      const couponDiscount = order.couponApplied
+      ? (order.totalOrderPrice - order.finalAmount)
+      : 0;
+
+      const finalAmount = nonReturnedAmount - couponDiscount;  
 
       const actualDiscount = orderRegularPrice - finalAmount;
 
-      const couponDiscount = order.couponApplied
-        ? (order.totalOrderPrice - order.finalAmount)
-        : 0;
 
       totalRegularPrice += orderRegularPrice;
       totalFinalAmount += finalAmount;
@@ -121,8 +122,6 @@ const loadSalesPage = async (req, res) => {
     });
   }
 };
-
-
 
 const generatePDF = async (res, salesData) => {
   const PDFDocument = require('pdfkit');
