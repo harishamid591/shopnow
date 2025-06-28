@@ -530,7 +530,7 @@ const generateInvoice = async (req, res) => {
     return res.send(pdfBuffer);
 
   } catch (error) {
-    console.error('Invoice generation error:', error);
+    console.error('Invoice generation error:', error.stack || error.message || error);
     return res.status(500).send('Failed to generate invoice');
   }
 };
