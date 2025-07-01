@@ -209,6 +209,14 @@
         data: { productId: productId, quantity: qty },
         success: (response) => {
           if (response.success) {
+
+             // ✅ Update the cart count badge
+            const badge = document.querySelector('.cart-count-badge');
+            if (badge) {
+              badge.innerText = response.cartCount;
+              badge.style.display = response.cartCount > 0 ? 'inline-block' : 'none';
+            }
+
             Swal.fire({
               title: "Added to Cart",
               text: response.message,

@@ -123,7 +123,7 @@ const addToCart = async (req, res) => {
       });
 
       await newCart.save();
-      return res.json({ success: true, message: 'Cart created and product added' });
+      return res.json({ success: true, message: 'Cart created and product added', cartCount: newCart.cartItems.length });
     }
 
     // Cart exists - check if product already in cart
@@ -164,7 +164,12 @@ const addToCart = async (req, res) => {
 
     await cart.save();
 
-    return res.json({ success: true, message: 'Product added to cart' });
+    return res.json({ 
+      success: true, 
+      message: 'Product added to cart',
+      cartCount: cart.cartItems.length
+    });
+
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: 'Server error' });
