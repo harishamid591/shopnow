@@ -1,260 +1,239 @@
 const userModel = require('../../models/userSchema');
-const env = require('dotenv').config();
 const nodemailer = require('nodemailer');
-const bcrypt = require('bcrypt')
-
-
+const bcrypt = require('bcrypt');
 
 function generateOtp() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 async function sendVerificationEmail(email, otp) {
-    try {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            port: 587,
-            secure: false,
-            requireTLS: true,
-            auth: {
-                user: process.env.NODEMAILER_EMAIL,
-                pass: process.env.NODEMAILER_PASSWORD
-            }
-        })
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASSWORD,
+      },
+    });
 
-        const info = await transporter.sendMail({
-            from: process.env.NODEMAILER_EMAIL,
-            to: email,
-            subject: "OTP for Verification",
-            text: `Your OTP is ${otp}`,
-            html: `<b>Your OTP is ${otp}</b>`
-        })
+    const info = await transporter.sendMail({
+      from: process.env.NODEMAILER_EMAIL,
+      to: email,
+      subject: 'OTP for Verification',
+      text: `Your OTP is ${otp}`,
+      html: `<b>Your OTP is ${otp}</b>`,
+    });
 
-        return info.accepted.length > 0;
-
-    } catch (error) {
-        console.error("Error for sending email", error)
-        return false
-    }
+    return info.accepted.length > 0;
+  } catch (error) {
+    console.error('Error for sending email', error);
+    return false;
+  }
 }
 
 const userProfile = async (req, res) => {
+  try {
+    const userId = req.session.user;
 
-    try {
+    const user = await userModel.findOne({ _id: userId });
 
-        const userId = req.session.user;
+    return res.render('profile', {
+      user,
+      currentPage: 'profile',
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.redirect('/pageNotFound');
+  }
+};
 
-        const user = await userModel.findOne({_id:userId});
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { name, email, phone } = req.body;
+    const updateData = { name, email, phone };
 
-        return res.render('profile', {
-            user,
-            currentPage: 'profile'
-        })
-
-    } catch (error) {
-        console.error('Error:',error)
-        res.redirect("/pageNotFound")
+    if (req.file) {
+      updateData.profilePicture = `/uploads/profileImages/${req.file.filename}`;
     }
-}
 
-const updateProfile = async (req,res)=>{
-    try {
+    await userModel.findByIdAndUpdate(userId, updateData);
 
-        const userId = req.session.user;
-        const {name, email, phone} = req.body;
-        const updateData = {name, email, phone};
+    return res.redirect('/userProfile');
+  } catch (error) {
+    console.log(error);
+    res.redirect('/pageNotFound');
+  }
+  
+};
 
-        if(req.file){
-            updateData.profilePicture = `/uploads/profileImages/${req.file.filename}`
-        }
+const changeEmail = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const user = await userModel.findById(userId);
 
-       const updated = await userModel.findByIdAndUpdate(userId,updateData)
+    return res.render('change-email', {
+      user,
+    });
+  } catch (error) {
+    console.log(error)
+    res.redirect('/pageNotFound');
+  }
+};
 
-        return res.redirect('/userProfile');
+const changeEmailValid = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { newEmail } = req.body;
 
+    const existEmail = await userModel.findOne({ email: newEmail });
 
-    } catch (error) {
-        
+    const userData = await userModel.findOne({ _id: userId });
+
+    if (existEmail) {
+      return res.render('change-email', {
+        user: userData,
+        error: 'These Email id is exist, add another Email id',
+      });
     }
-}
 
-const changeEmail = async (req,res)=>{
-    try {
-        
-        const userId = req.session.user;
-        const user = await userModel.findById(userId);
+    const otp = generateOtp();
 
-        return res.render('change-email',{
-            user
-        })
+    const emailSend = await sendVerificationEmail(newEmail, otp);
 
-    } catch (error) {
-        res.redirect("/pageNotFound")
+    if (!emailSend) {
+      return res.render('change-email', {
+        user: userData,
+        error: 'Email Send Error',
+      });
     }
-}
 
-const changeEmailValid = async (req,res)=>{
-    try {
-        const userId = req.session.user
-        const {newEmail} = req.body;
+    req.session.userOtp = otp;
+    req.session.newEmail = newEmail;
 
-        const existEmail = await userModel.findOne({email:newEmail});
+    res.render('change-email-otp', { newEmail, user: userData });
+  } catch (error) {
+    console.log(error)
+    res.redirect('/pageNotFound');
+  }
+};
 
-        const userData = await userModel.findOne({_id:userId});
+const verifyEmailOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
 
+    const userId = req.session.user;
+    const newEmail = req.session.newEmail;
 
-        if(existEmail){
-            return  res.render("change-email", {
-                user:userData,
-                error: "These Email id is exist, add another Email id"
-              });
-        }
+    if (req.session.userOtp === otp) {
+      await userModel.findByIdAndUpdate(userId, {
+        email: newEmail,
+      });
 
-        const otp = generateOtp()
-
-        const emailSend = await sendVerificationEmail(newEmail, otp);
-
-       
-        if (!emailSend) {
-            return  res.render("change-email", {
-                user:userData,
-                error: "Email Send Error"
-              });
-        }
-      
-
-        req.session.userOtp = otp;
-        req.session.newEmail = newEmail;
-
-        res.render('change-email-otp',{newEmail,user:userData});
-
-    } catch (error) {
-        res.redirect("/pageNotFound")
+      return res.json({
+        success: true,
+      });
+    } else {
+      return res.json({
+        success: false,
+      });
     }
-}
+  } catch (error) {
+    console.log(error);
+    res.redirect('/pageNotFound');
+  }
+};
 
-const verifyEmailOtp = async (req,res)=>{
-    try {
+const resendEmailOtp = async (req, res) => {
+  try {
+    const newEmail = req.session.newEmail;
 
-        const {otp} = req.body;
+    const otp = generateOtp();
 
-        const userId = req.session.user;
-        const newEmail = req.session.newEmail;
+    const sendMail = await sendVerificationEmail(newEmail, otp);
 
-        if(req.session.userOtp===otp){
-
-           await userModel.findByIdAndUpdate(userId,{
-            email:newEmail
-           })
-
-           return res.json({
-            success:true
-           })
-      
-        }else{
-            return res.json({
-                success:false,
-               })
-        }
-          
-    } catch (error) {
-        console.log(error)
-        res.redirect("/pageNotFound")
+    if (!sendMail) {
+      return res.json({
+        success: false,
+        message: 'Send Email Failed, Try again later',
+      });
     }
-}
 
-const resendEmailOtp = async (req,res)=>{
-    try {
-        const newEmail = req.session.newEmail;
+    req.session.userOtp = otp;
 
+    return res.json({
+      success: true,
+    });
+  } catch (error) {
+    console.log(error)
+    res.redirect('/pageNotFound');
+  }
+};
 
-        const otp = generateOtp();
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
 
-        const sendMail = await sendVerificationEmail(newEmail,otp);
+    const userId = req.session.user;
 
-        if(!sendMail){
-            return res.json({
-                success:false,
-                message:'Send Email Failed, Try again later'
-            })
-        }
+    const userData = await userModel.findById(userId);
 
-        req.session.userOtp = otp;
+    const password = userData.password;
 
-        return res.json({
-            success:true
-        })
+    const checkPassword = await bcrypt.compare(currentPassword, password);
 
-    } catch (error) {
-        res.redirect("/pageNotFound")
+    if (!checkPassword) {
+      return res.render('profile', {
+        user: userData,
+        error: 'You have entered incorrect password',
+        currentPage: 'profile',
+      });
     }
-}
 
-const changePassword = async (req,res)=>{
-    try {
-        
-        const {currentPassword, newPassword, confirmPassword} = req.body;
-
-        const userId = req.session.user;
-
-        const userData = await userModel.findById(userId);
-
-        const password = userData.password;
-
-        const checkPassword = await bcrypt.compare(currentPassword,password);
-
-        if(!checkPassword){
-            return res.render('profile',{
-                user: userData,
-                error: 'You have entered incorrect password',
-                 currentPage: 'profile'
-            })
-        }
-
-        if(newPassword !== confirmPassword){
-            return res.render('profile',{
-                user: userData,
-                error: 'new password and confirm password is not match',
-                currentPage: 'profile'
-            })
-        }
-
-        const hashedPassword = await bcrypt.hash(newPassword,10);
-
-        await userModel.findByIdAndUpdate(userId,{
-            password:hashedPassword
-        })
-
-        return res.render('profile',{
-            user: userData,
-            success: 'Password has changed successfully',
-            currentPage: 'profile'
-        })
-
-    } catch (error) {
-        res.redirect("/pageNotFound")
+    if (newPassword !== confirmPassword) {
+      return res.render('profile', {
+        user: userData,
+        error: 'new password and confirm password is not match',
+        currentPage: 'profile',
+      });
     }
-}
 
-const getForgotPassPage = async (req,res)=>{
-    try {
-        
-        res.render("forgot-password");
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    } catch (error) {
+    await userModel.findByIdAndUpdate(userId, {
+      password: hashedPassword,
+    });
 
-        res.redirect("/pageNotFound")
-        
-    }
-}
+    return res.render('profile', {
+      user: userData,
+      success: 'Password has changed successfully',
+      currentPage: 'profile',
+    });
+  } catch (error) {
+    console.log(error)
+    res.redirect('/pageNotFound');
+  }
+};
+
+const getForgotPassPage = async (req, res) => {
+  try {
+    res.render('forgot-password');
+  } catch (error) {
+    console.log(error)
+    res.redirect('/pageNotFound');
+  }
+};
 
 module.exports = {
-    userProfile,
-    updateProfile,
-    changeEmail,
-    changeEmailValid,
-    verifyEmailOtp,
-    resendEmailOtp,
-    changePassword,
-    getForgotPassPage
-}
+  userProfile,
+  updateProfile,
+  changeEmail,
+  changeEmailValid,
+  verifyEmailOtp,
+  resendEmailOtp,
+  changePassword,
+  getForgotPassPage,
+};

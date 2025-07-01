@@ -1,65 +1,63 @@
 const couponModel = require('../../models/couponSchema');
 const orderModel = require('../../models/orderSchema');
 const productModel = require('../../models/productSchema');
-const userModel = require("../../models/userSchema");
+const userModel = require('../../models/userSchema');
 const { creditWallet } = require('../../helper/refundWallet');
 
 const getOrders = async (req, res) => {
   try {
-
-    const query = {}
+    const query = {};
 
     const search = req.query.search || '';
     const page = parseInt(req.query.page) || 1;
     const limit = 5; // You can change this as needed
     const skip = (page - 1) * limit;
 
-    if(req.query.search){
+    if (req.query.search) {
       query.$or = [
         { orderId: { $regex: new RegExp(search, 'i') } },
-        { 'address.name': { $regex: new RegExp(search, 'i') } }
+        { 'address.name': { $regex: new RegExp(search, 'i') } },
       ];
-
     }
 
     // Count total matching documents
     const totalOrders = await orderModel.countDocuments(query);
     const totalPages = Math.ceil(totalOrders / limit);
 
-    const ordersData = await orderModel.find(query)
+    const ordersData = await orderModel
+      .find(query)
       .populate('orderedItems.product') // populates product info
       .sort({ createdOn: -1 })
       .skip(skip)
       .limit(limit);
 
-
-    const orders = ordersData.map(order => {
+    const orders = ordersData.map((order) => {
       return {
         _id: order.orderId,
         date: order.invoiceDate.toISOString().split('T')[0],
         customerName: order.address.name,
-        products: order.orderedItems.map(item => ({
-          name: item.product?.productName || "Unknown Product",
-          image: item.product?.productImage?.[0] || "/images/default.jpg",
+        products: order.orderedItems.map((item) => ({
+          name: item.product?.productName || 'Unknown Product',
+          image: item.product?.productImage?.[0] || '/images/default.jpg',
           quantity: item.quantity || 1,
           itemId: item._id,
           amount: (item.price * item.quantity).toFixed(2),
           status: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-          requestStatus: item.requestStatus
+          requestStatus: item.requestStatus,
         })),
         amount: order.finalAmount,
-        status: order.status.charAt(0).toUpperCase() + order.status.slice(1)
+        status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
       };
     });
 
     res.render('admin-orders', {
       orders,
       currentPage: page,
-      totalPages
+      totalPages,
     });
   } catch (error) {
-    console.error("Error fetching orders:", error);
-    res.status(500).send("Something went wrong while fetching orders.");
+    console.error('Error fetching orders:', error);
+    res.status(500).send('Something went wrong while fetching orders.');
   }
 };
 
@@ -67,40 +65,38 @@ const cancelProductOrder = async (req, res) => {
   try {
     const { orderId, itemId } = req.body;
 
-
     // Find the order belonging to the user
     const order = await orderModel.findOne({ orderId: orderId });
 
-
     if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      return res.status(404).json({ message: 'Order not found' });
     }
 
     // Find the item within the orderedItems array
-    const itemIndex = order.orderedItems.findIndex(item => item._id.toString() === itemId);
+    const itemIndex = order.orderedItems.findIndex((item) => item._id.toString() === itemId);
     if (itemIndex === -1) {
-      return res.status(404).json({ message: "Ordered item not found" });
+      return res.status(404).json({ message: 'Ordered item not found' });
     }
 
     const item = order.orderedItems[itemIndex];
 
     // If already cancelled
-    if (item.status === "cancelled") {
-      return res.status(400).json({ message: "This item is already cancelled" });
+    if (item.status === 'cancelled') {
+      return res.status(400).json({ message: 'This item is already cancelled' });
     }
 
     // Update item status to cancelled
-    order.orderedItems[itemIndex].status = "cancelled";
+    order.orderedItems[itemIndex].status = 'cancelled';
     order.orderedItems[itemIndex].cancelledAt = new Date();
 
-     // Adjust total and final price
-     const cancelledAmount = item.totalProductPrice || (item.price * item.quantity);
-     order.totalOrderPrice -= cancelledAmount;
-     order.finalAmount -= cancelledAmount;
- 
-     // Ensure prices don’t go negative
-     if (order.totalOrderPrice < 0) order.totalOrderPrice = 0;
-     if (order.finalAmount < 0) order.finalAmount = 0;
+    // Adjust total and final price
+    const cancelledAmount = item.totalProductPrice || item.price * item.quantity;
+    order.totalOrderPrice -= cancelledAmount;
+    order.finalAmount -= cancelledAmount;
+
+    // Ensure prices don’t go negative
+    if (order.totalOrderPrice < 0) order.totalOrderPrice = 0;
+    if (order.finalAmount < 0) order.finalAmount = 0;
 
     // Restore stock
     const product = await productModel.findById(item.product);
@@ -110,9 +106,9 @@ const cancelProductOrder = async (req, res) => {
     }
 
     // Check if all products are cancelled
-    const allItemsCancelled = order.orderedItems.every(i => i.status === "cancelled");
+    const allItemsCancelled = order.orderedItems.every((i) => i.status === 'cancelled');
     if (allItemsCancelled) {
-      order.status = "cancelled"; // update order status
+      order.status = 'cancelled'; // update order status
       order.cancelledAt = new Date();
     }
 
@@ -127,48 +123,48 @@ const cancelProductOrder = async (req, res) => {
         orderId: order.orderId,
         productId: item._id.toString(),
         purpose: 'cancellation',
-        description: `Refund for cancelled product: ${item.productName}`
+        description: `Refund for cancelled product: ${item.productName}`,
       });
     }
-  
-    res.status(200).json({ success: true, message: "Order item cancelled successfully" });
+
+    res.status(200).json({ success: true, message: 'Order item cancelled successfully' });
   } catch (error) {
-    console.error("Error cancelling order:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error('Error cancelling order:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
-}
+};
 
 const updateProductOrderStatus = async (req, res) => {
   try {
     const { orderId, status, itemId } = req.body;
 
-    const order = await orderModel.findOne({ orderId: orderId })
+    const order = await orderModel.findOne({ orderId: orderId });
 
-    const itemIndex = order.orderedItems.findIndex(item => item._id.toString() === itemId)
+    const itemIndex = order.orderedItems.findIndex((item) => item._id.toString() === itemId);
 
     if (itemIndex === -1) {
-      return res.status(404).json({ message: "Ordered item not found" });
+      return res.status(404).json({ message: 'Ordered item not found' });
     }
 
     const item = order.orderedItems[itemIndex];
 
     if (item.status === 'cancelled') {
-      return res.status(400).json({ success: false, message: 'Cannot update cancelled order' })
+      return res.status(400).json({ success: false, message: 'Cannot update cancelled order' });
     }
 
-    item.status = status
+    item.status = status;
 
-    item.updatedOn = new Date()
+    item.updatedOn = new Date();
 
     if (status === 'delivered') {
-      item.deliveredOn = new Date()
+      item.deliveredOn = new Date();
     }
 
-    await order.save()
+    await order.save();
 
     // Check if all items now have the same status
     const allSameStatus = order.orderedItems.every(
-      p => p.status === status || p.status === 'cancelled'
+      (p) => p.status === status || p.status === 'cancelled'
     );
 
     // Only update the order status if all non-cancelled products match the updated status
@@ -183,13 +179,12 @@ const updateProductOrderStatus = async (req, res) => {
       await order.save(); // save again with updated order status
     }
 
-    res.json({ success: true, message: "Product status updated successfully" });
-
+    res.json({ success: true, message: 'Product status updated successfully' });
   } catch (error) {
-    console.error("Error updating order status:", error)
-    res.status(500).json({ success: false, message: "Internal server error" })
+    console.error('Error updating order status:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
-}
+};
 
 //admin orders
 
@@ -197,9 +192,7 @@ const viewOrderDetails = async (req, res) => {
   try {
     const orderId = req.params.id;
 
-    const order = await orderModel.findOne({ orderId })
-      .populate('orderedItems.product')
-      .lean();
+    const order = await orderModel.findOne({ orderId }).populate('orderedItems.product').lean();
 
     if (!order) {
       return res.status(404).send('Order not found');
@@ -221,11 +214,14 @@ const viewOrderDetails = async (req, res) => {
     const userData = await userModel.findById(userId);
 
     // Compute returned amount:
-    const totalOrderAmountBeforeDiscount = order.orderedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalOrderAmountBeforeDiscount = order.orderedItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
 
     let returnedAmount = 0;
 
-    order.orderedItems.forEach(item => {
+    order.orderedItems.forEach((item) => {
       if (item.status === 'returned') {
         const itemTotal = item.price * item.quantity;
 
@@ -257,7 +253,7 @@ const viewOrderDetails = async (req, res) => {
       address: `${order.address?.streetAddress || ''}, ${order.address?.town || ''}, ${order.address?.city || ''}, ${order.address?.state || ''}, ${order.address?.country || ''}, ${order.address?.pincode || ''}`,
       phone: order.address?.phone,
       email: userData.email || 'Not Provided',
-      products: order.orderedItems.map(item => ({
+      products: order.orderedItems.map((item) => ({
         productId: item.product._id,
         itemId: item._id,
         name: item.productName,
@@ -272,7 +268,7 @@ const viewOrderDetails = async (req, res) => {
         requestStatus: item.requestStatus,
         restocked: item.restocked,
         deliveredOn: item.deliveredOn,
-        returnedOn:item.returnedOn
+        returnedOn: item.returnedOn,
       })),
       total: order.totalOrderPrice,
       couponDiscount, // add discount value
@@ -283,17 +279,15 @@ const viewOrderDetails = async (req, res) => {
       couponApplied: order.couponApplied,
       couponName: order.couponName,
       createdOn: order.createdOn,
-      deliveredOn:order.deliveredOn
+      deliveredOn: order.deliveredOn,
     };
 
     res.render('admin-orderDetails', { order: formattedOrder });
-
   } catch (error) {
     console.error('Error loading order details:', error);
     res.status(500).send('Internal Server Error');
   }
 };
-
 
 const updateOrderStatus = async (req, res) => {
   try {
@@ -316,7 +310,7 @@ const updateOrderStatus = async (req, res) => {
     }
 
     // Update status for all non-cancelled products in orderedItems
-    order.orderedItems = order.orderedItems.map(item => {
+    order.orderedItems = order.orderedItems.map((item) => {
       if (item.status === 'cancelled') {
         return item; // leave cancelled item unchanged
       }
@@ -337,7 +331,6 @@ const updateOrderStatus = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
-
 
 const cancelOrder = async (req, res) => {
   try {
@@ -385,41 +378,43 @@ const cancelOrder = async (req, res) => {
             orderId: order.orderId,
             productId: item._id.toString(),
             purpose: 'cancellation',
-            description: `Refund for cancelled item By Admin: ${item.productName}`
+            description: `Refund for cancelled item By Admin: ${item.productName}`,
           });
         }
       }
     }
 
-    res.json({ success: true, message: 'Order cancelled, stock updated and refund processed if applicable' });
+    res.json({
+      success: true,
+      message: 'Order cancelled, stock updated and refund processed if applicable',
+    });
   } catch (error) {
     console.error('Error cancelling order:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
-
 const handleReturnRequest = async (req, res) => {
   try {
     const { orderId, productId, action, rejectionCategory, rejectionReason } = req.body;
 
-    const order = await orderModel.findOne({orderId});
+    const order = await orderModel.findOne({ orderId });
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    const itemIndex = order.orderedItems.findIndex(
-      (item) => item._id.toString() === productId
-    );
+    const itemIndex = order.orderedItems.findIndex((item) => item._id.toString() === productId);
 
     if (itemIndex === -1) {
-      return res.status(404).json({ success: false, message: "Product not found in order" });
+      return res.status(404).json({ success: false, message: 'Product not found in order' });
     }
 
     const item = order.orderedItems[itemIndex];
 
     if (item.status !== 'return_requested') {
-      return res.status(400).json({ success: false, message: "This product is not in return request state" });
+      return res
+        .status(400)
+        .json({ success: false, message: 'This product is not in return request state' });
     }
 
     if (action === 'approve') {
@@ -432,7 +427,7 @@ const handleReturnRequest = async (req, res) => {
       item.rejectionReason = rejectionReason;
       item.returnImages = [];
     } else {
-      return res.status(400).json({ success: false, message: "Invalid action" });
+      return res.status(400).json({ success: false, message: 'Invalid action' });
     }
 
     // Update overall order status if any item is still in return_requested or returning state
@@ -450,10 +445,10 @@ const handleReturnRequest = async (req, res) => {
       message: `Return ${action === 'approve' ? 'approved' : 'rejected'} successfully.`,
     });
   } catch (error) {
-    console.error("Error handling return request:", error);
+    console.error('Error handling return request:', error);
     res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: 'Internal server error',
     });
   }
 };
@@ -467,18 +462,16 @@ const updateReturnStatus = async (req, res) => {
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: "Order not found",
+        message: 'Order not found',
       });
     }
 
-    const itemIndex = order.orderedItems.findIndex(
-      (item) => item._id.toString() === productId
-    );
+    const itemIndex = order.orderedItems.findIndex((item) => item._id.toString() === productId);
 
     if (itemIndex === -1) {
       return res.status(404).json({
         success: false,
-        message: "Product not found in order",
+        message: 'Product not found in order',
       });
     }
 
@@ -488,7 +481,7 @@ const updateReturnStatus = async (req, res) => {
     if (!['returning', 'returned'].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status provided",
+        message: 'Invalid status provided',
       });
     }
 
@@ -510,15 +503,15 @@ const updateReturnStatus = async (req, res) => {
 
     await order.save();
 
-     // Refund to wallet only when status becomes 'returned'
-     if (status === 'returned') {
+    // Refund to wallet only when status becomes 'returned'
+    if (status === 'returned') {
       await creditWallet({
         userId: order.userId,
         amount: item.totalProductPrice,
         orderId: order.orderId,
         productId,
         purpose: 'return',
-        description: 'Refund for returned product'
+        description: 'Refund for returned product',
       });
     }
 
@@ -527,14 +520,13 @@ const updateReturnStatus = async (req, res) => {
       message: `Return status updated to '${status}' successfully.`,
     });
   } catch (error) {
-    console.error("Error updating return status:", error);
+    console.error('Error updating return status:', error);
     res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: 'Internal server error',
     });
   }
 };
-
 
 const addToStock = async (req, res) => {
   try {
@@ -546,11 +538,8 @@ const addToStock = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-
     // Find the product in orderedItems
-    const orderedItem = order.orderedItems.find(
-      item => item.product.toString() === productId
-    );
+    const orderedItem = order.orderedItems.find((item) => item.product.toString() === productId);
 
     if (!orderedItem) {
       return res.status(404).json({ success: false, message: 'Item not found in order' });
@@ -595,17 +584,5 @@ module.exports = {
   cancelOrder,
   handleReturnRequest,
   updateReturnStatus,
-  addToStock
+  addToStock,
 };
-
-
-
-
-
-
-
-
-
-
-
-

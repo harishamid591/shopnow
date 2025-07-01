@@ -1,6 +1,5 @@
-const couponModel = require("../../models/couponSchema");
+const couponModel = require('../../models/couponSchema');
 const userModel = require('../../models/userSchema');
-
 
 const loadCoupon = async (req, res) => {
   try {
@@ -9,24 +8,28 @@ const loadCoupon = async (req, res) => {
     const user = await userModel.findById(userId);
 
     // General Coupons: visible to all but not referral coupons
-    let generalCoupons = await couponModel.find({
-      isList: true,
-      isReferralCoupon: { $ne: true },
-      userId: { $ne: userId }
-    }).sort({ expireOn: 1 });
+    let generalCoupons = await couponModel
+      .find({
+        isList: true,
+        isReferralCoupon: { $ne: true },
+        userId: { $ne: userId },
+      })
+      .sort({ expireOn: 1 });
 
     // Referral Coupons: given specifically to this user
-    let referralCoupons = await couponModel.find({
-      userId: userId,
-      isReferralCoupon: true,
-      isUsed:false
-    }).sort({ expireOn: 1 });
+    let referralCoupons = await couponModel
+      .find({
+        userId: userId,
+        isReferralCoupon: true,
+        isUsed: false,
+      })
+      .sort({ expireOn: 1 });
 
     // Format both coupon types
     const formatCoupons = (coupons) =>
-      coupons.map(coupon => ({
+      coupons.map((coupon) => ({
         ...coupon._doc,
-        formattedExpiry: coupon.expireOn.toLocaleDateString('en-GB').replace(/\//g, '-')
+        formattedExpiry: coupon.expireOn.toLocaleDateString('en-GB').replace(/\//g, '-'),
       }));
 
     generalCoupons = formatCoupons(generalCoupons);
@@ -36,11 +39,10 @@ const loadCoupon = async (req, res) => {
       user,
       currentPage: 'coupons',
       generalCoupons,
-      referralCoupons
+      referralCoupons,
     });
-
   } catch (error) {
-    console.error("Error loading coupons:", error);
+    console.error('Error loading coupons:', error);
     res.status(500).render('errorPage', { message: 'Failed to load coupons', error });
   }
 };
@@ -65,17 +67,20 @@ const applyCoupon = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Coupon has expired.' });
     }
 
-    if(coupon.isReferralCoupon){
-
+    if (coupon.isReferralCoupon) {
       if (coupon.isUsed) {
-        return res.status(400).json({ success: false, message: 'You have already used this referral coupon.' });
+        return res
+          .status(400)
+          .json({ success: false, message: 'You have already used this referral coupon.' });
       }
-    }else if (coupon.userId.map(id => id.toString()).includes(userId.toString())) {
-      return res.status(400).json({ success: false, message: 'You have already used this coupon.' });
-    } 
+    } else if (coupon.userId.map((id) => id.toString()).includes(userId.toString())) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'You have already used this coupon.' });
+    }
 
     // Check if order total meets minimum requirement
-    if(!coupon.isReferralCoupon){
+    if (!coupon.isReferralCoupon) {
       if (orderTotal < coupon.minimumPrice) {
         return res.status(400).json({
           success: false,
@@ -92,28 +97,28 @@ const applyCoupon = async (req, res) => {
     } else {
       // Percentage discount with optional max cap
       const calculatedDiscount = (orderTotal * coupon.offerPrice) / 100;
-      discount = coupon.maxPrice ? Math.min(calculatedDiscount, coupon.maxPrice) : calculatedDiscount;
+      discount = coupon.maxPrice
+        ? Math.min(calculatedDiscount, coupon.maxPrice)
+        : calculatedDiscount;
     }
-   
+
     // If everything is valid, return coupon discount
     return res.status(200).json({
       success: true,
       coupon: {
         code: coupon.name,
         offerPrice: coupon.offerPrice,
-        maxPrice: coupon.maxPrice || null
+        maxPrice: coupon.maxPrice || null,
       },
-      discount: Math.floor(discount) 
+      discount: Math.floor(discount),
     });
-
   } catch (error) {
-    console.error("Error applying coupon:", error);
+    console.error('Error applying coupon:', error);
     res.status(500).json({ success: false, message: 'Something went wrong. Try again.' });
   }
 };
 
-
 module.exports = {
-    loadCoupon,
-    applyCoupon
-}
+  loadCoupon,
+  applyCoupon,
+};

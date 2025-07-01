@@ -2,18 +2,22 @@ const Wallet = require('../models/walletSchema');
 const Transaction = require('../models/transactionSchema');
 const Order = require('../models/orderSchema'); // required to fetch order and items
 
-const creditWallet = async ({ userId, amount, orderId, productId, purpose = 'refund', description = 'Refund issued' }) => {
+const creditWallet = async ({
+  userId,
+  amount,
+  orderId,
+  productId,
+  purpose = 'refund',
+  description = 'Refund issued',
+}) => {
   if (!userId || !amount || !orderId || !productId) throw new Error('Missing required parameters');
-
 
   // Fetch the order to calculate the correct refund
   const order = await Order.findOne({ orderId });
   if (!order) throw new Error('Order not found');
 
-
   // Find the specific product/item in the order
-  const item = order.orderedItems.find(i => i._id.toString() === productId);
-
+  const item = order.orderedItems.find((i) => i._id.toString() === productId);
 
   if (!item) throw new Error('Product not found in order');
 
@@ -24,7 +28,7 @@ const creditWallet = async ({ userId, amount, orderId, productId, purpose = 'ref
     const itemTotal = item.price * item.quantity;
 
     // Total amount of all items in order (before discount)
-    const totalOrderAmount = order.orderedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+    const totalOrderAmount = order.orderedItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
 
     // Proportion of discount for this item
     const discountRatio = itemTotal / totalOrderAmount;
@@ -45,12 +49,14 @@ const creditWallet = async ({ userId, amount, orderId, productId, purpose = 'ref
       userId,
       balance: refundAmount,
       refundAmount: refundAmount,
-      transactions: [{
-        amount: refundAmount,
-        transactionType: 'credit',
-        transactionPurpose: 'refund',
-        description
-      }]
+      transactions: [
+        {
+          amount: refundAmount,
+          transactionType: 'credit',
+          transactionPurpose: 'refund',
+          description,
+        },
+      ],
     });
   } else {
     wallet.balance += refundAmount;
@@ -59,7 +65,7 @@ const creditWallet = async ({ userId, amount, orderId, productId, purpose = 'ref
       amount: refundAmount,
       transactionType: 'credit',
       transactionPurpose: 'refund',
-      description
+      description,
     });
     await wallet.save();
   }
@@ -75,11 +81,8 @@ const creditWallet = async ({ userId, amount, orderId, productId, purpose = 'ref
     description,
     orders: [{ orderId, amount: refundAmount }],
     walletBalanceAfter: wallet.balance,
-    metadata: { productId }
+    metadata: { productId },
   });
 };
 
 module.exports = { creditWallet };
-
-
-

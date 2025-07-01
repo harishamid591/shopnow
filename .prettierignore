@@ -1,0 +1,7 @@
+node_modules
+public
+uploads
+public/js/jquery-1.11.0.min.js
+public/js/modernizr.js
+public/js/plugins.js
+public/js/script.js

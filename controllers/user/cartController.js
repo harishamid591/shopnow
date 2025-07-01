@@ -1,9 +1,6 @@
-const cartModel = require("../../models/cartSchema");
-const categoryModel = require("../../models/categorySchema");
-const productModel = require("../../models/productSchema");
-const userModel = require("../../models/userSchema");
-
-
+const cartModel = require('../../models/cartSchema');
+const productModel = require('../../models/productSchema');
+const userModel = require('../../models/userSchema');
 
 const getCartPage = async (req, res) => {
   try {
@@ -12,14 +9,12 @@ const getCartPage = async (req, res) => {
     const userData = await userModel.findById(userId);
 
     // Get the cart for the logged-in user and populate product details
-    const cart = await cartModel.findOne({ userId })
-    .populate({
+    const cart = await cartModel.findOne({ userId }).populate({
       path: 'cartItems.productId',
       populate: {
         path: 'category', // populate category also
       },
     });
-
 
     if (!cart || cart.cartItems.length === 0) {
       // If no cart or empty cart
@@ -30,48 +25,48 @@ const getCartPage = async (req, res) => {
         totalDiscount: 0,
         shippingCharges: 0,
         finalPrice: 0,
-        user: userData
+        user: userData,
       });
     }
 
-
-
     const cartItems = cart.cartItems
-    .filter(item => item.productId) // skip if product was deleted
-    .map(item => {
-      const product = item.productId;
-      const price = product.price;
-      const productDiscount = product.discount || 0;
-      const categoryDiscount = product.category?.categoryOffer || 0;
+      .filter((item) => item.productId) // skip if product was deleted
+      .map((item) => {
+        const product = item.productId;
+        const price = product.price;
+        const productDiscount = product.discount || 0;
+        const categoryDiscount = product.category?.categoryOffer || 0;
 
-      // 🟡 Take maximum of categoryOffer and product.discount
-      const effectiveDiscount = Math.max(productDiscount, categoryDiscount);
+        // 🟡 Take maximum of categoryOffer and product.discount
+        const effectiveDiscount = Math.max(productDiscount, categoryDiscount);
 
-      const quantity = item.quantity;
-      
-      const discountedPrice = price - (price * effectiveDiscount) / 100;
-      const totalPrice = discountedPrice * quantity;
+        const quantity = item.quantity;
 
-      return {
-        _id: product._id,
-        image: product.productImage[0],
-        name: product.productName,
-        quantity,
-        price,
-        discount: effectiveDiscount, // Send the effective discount to frontend
-        discountedPrice,
-        totalPrice,
-        stock: product.stock
-      };
-    });
+        const discountedPrice = price - (price * effectiveDiscount) / 100;
+        const totalPrice = discountedPrice * quantity;
+
+        return {
+          _id: product._id,
+          image: product.productImage[0],
+          name: product.productName,
+          quantity,
+          price,
+          discount: effectiveDiscount, // Send the effective discount to frontend
+          discountedPrice,
+          totalPrice,
+          stock: product.stock,
+        };
+      });
 
     // Calculate totals
     const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
     const totalMRP = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    const totalDiscount = cartItems.reduce((acc, item) => acc + ((item.price * item.discount) / 100) * item.quantity, 0);
+    const totalDiscount = cartItems.reduce(
+      (acc, item) => acc + ((item.price * item.discount) / 100) * item.quantity,
+      0
+    );
 
-    const priceAfterDiscount = totalMRP - totalDiscount
-
+    const priceAfterDiscount = totalMRP - totalDiscount;
 
     const shippingCharges = priceAfterDiscount > 500 ? 0 : 40;
 
@@ -84,9 +79,8 @@ const getCartPage = async (req, res) => {
       totalDiscount,
       shippingCharges,
       finalPrice,
-      user: userData
+      user: userData,
     });
-
   } catch (error) {
     console.log('Error loading cart page:', error);
     res.status(500).send('Internal Server Error');
@@ -95,7 +89,6 @@ const getCartPage = async (req, res) => {
 
 const addToCart = async (req, res) => {
   try {
-
     const userId = req.session.user;
     const { productId, quantity } = req.body;
 
@@ -109,38 +102,34 @@ const addToCart = async (req, res) => {
       return res.json({ success: false, message: 'Product is out of stock' });
     }
 
-
     const price = product.price;
     const qty = parseInt(quantity) || 1;
     const totalPrice = price * qty;
 
-
     let cart = await cartModel.findOne({ userId });
-
 
     // If no cart exists, create a new one
     if (!cart) {
       const newCart = new cartModel({
         userId,
-        cartItems: [{
-          productId,
-          quantity: qty,
-          price,
-          totalPrice
-        }]
+        cartItems: [
+          {
+            productId,
+            quantity: qty,
+            price,
+            totalPrice,
+          },
+        ],
       });
 
       await newCart.save();
       return res.json({ success: true, message: 'Cart created and product added' });
     }
 
-
-
     // Cart exists - check if product already in cart
     const existingItemIndex = cart.cartItems.findIndex(
-      item => item.productId.toString() === productId
+      (item) => item.productId.toString() === productId
     );
-
 
     if (existingItemIndex > -1) {
       const existingItem = cart.cartItems[existingItemIndex];
@@ -159,7 +148,6 @@ const addToCart = async (req, res) => {
       // Update quantity and total price
       existingItem.quantity = newQty;
       existingItem.totalPrice = existingItem.quantity * price;
-
     } else {
       // New product in cart
       if (qty > 5) {
@@ -170,14 +158,13 @@ const addToCart = async (req, res) => {
         productId,
         quantity: qty,
         price,
-        totalPrice
+        totalPrice,
       });
     }
 
-   await cart.save();
+    await cart.save();
 
     return res.json({ success: true, message: 'Product added to cart' });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: 'Server error' });
@@ -189,20 +176,15 @@ const changeQuantity = async (req, res) => {
     const { action, productId } = req.body;
     const userId = req.session.user;
 
-
     // Fetch user cart
     const cart = await cartModel.findOne({ userId });
-
 
     if (!cart) {
       return res.status(404).json({ status: false, message: 'Cart not found' });
     }
 
     // Find the item in the cart
-    const itemIndex = cart.cartItems.findIndex(
-      item => item.productId.toString() === productId
-    );
-
+    const itemIndex = cart.cartItems.findIndex((item) => item.productId.toString() === productId);
 
     if (itemIndex === -1) {
       return res.status(404).json({ status: false, message: 'Product not found in cart' });
@@ -210,19 +192,19 @@ const changeQuantity = async (req, res) => {
 
     const item = cart.cartItems[itemIndex];
 
-
     const product = await productModel.findById(productId);
-
-
 
     if (!product) {
       return res.status(404).json({ status: false, message: 'Product no longer exists' });
     }
 
-    if(product.stock === 0){
-      cart.cartItems.splice(itemIndex,1);
+    if (product.stock === 0) {
+      cart.cartItems.splice(itemIndex, 1);
       await cart.save();
-      return res.json({status:true,message:'Sorry! Product removed from cart due to zero stock'})
+      return res.json({
+        status: true,
+        message: 'Sorry! Product removed from cart due to zero stock',
+      });
     }
 
     if (action === 'increase') {
@@ -235,7 +217,6 @@ const changeQuantity = async (req, res) => {
       }
 
       item.quantity += 1;
-
     } else if (action === 'decrease') {
       if (item.quantity > 1) {
         item.quantity -= 1;
@@ -254,9 +235,8 @@ const changeQuantity = async (req, res) => {
 
     await cart.save();
     return res.json({ status: true, message: 'Cart updated successfully' });
-
   } catch (error) {
-    console.error("changeQuantity Error:", error);
+    console.error('changeQuantity Error:', error);
     return res.status(500).json({ status: false, message: 'Server error while updating cart' });
   }
 };
@@ -274,9 +254,7 @@ const deleteItem = async (req, res) => {
     }
 
     // Check if the product exists in the cart
-    const itemIndex = cart.cartItems.findIndex(
-      item => item.productId.toString() === productId
-    );
+    const itemIndex = cart.cartItems.findIndex((item) => item.productId.toString() === productId);
 
     if (itemIndex === -1) {
       return res.status(404).json({ success: false, message: 'Product not found in cart' });
@@ -289,18 +267,15 @@ const deleteItem = async (req, res) => {
     await cart.save();
 
     return res.status(200).json({ success: true, message: 'Product removed from cart' });
-
   } catch (error) {
-    console.error("deleteItem Error:", error);
+    console.error('deleteItem Error:', error);
     return res.status(500).json({ success: false, message: 'Server error while deleting item' });
   }
 };
 
-
-
 module.exports = {
-    getCartPage,
-    addToCart,
-    changeQuantity,
-    deleteItem
-}
+  getCartPage,
+  addToCart,
+  changeQuantity,
+  deleteItem,
+};
