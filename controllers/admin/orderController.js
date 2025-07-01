@@ -286,7 +286,7 @@ const viewOrderDetails = async (req, res) => {
       deliveredOn:order.deliveredOn
     };
 
-    res.render('admin-OrderDetails', { order: formattedOrder });
+    res.render('admin-orderDetails', { order: formattedOrder });
 
   } catch (error) {
     console.error('Error loading order details:', error);
